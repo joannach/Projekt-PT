@@ -1,0 +1,518 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>csgl-opengl</name>
+    </assembly>
+    <members>
+        <member name="T:CsGL.OpenGL.GDITextureFont">
+            <summary>
+            This is a textured font with a texture dynamically generated on demand
+            by the GDI. 
+            
+            Still need one improvement, only one range could be initialized
+            now...
+            </summary>
+        </member>
+        <member name="T:CsGL.OpenGL.OpenGLFont">
+            <summary>
+            TODO unfortunately the 2 possible "native" implementation 
+            (using wglUseFontBitmap &amp; wglUseFontBitmap) fail...
+            <br/>
+            there is number of way to display font. you should find description
+            of them in NeHe tutorial 13, 14 &amp; 17. All of them using display 
+            list and different method to generate them. example 13 &amp; 14 use 2
+            OS native function, example 17 use an image with the glyph and 
+            the "OpenGL programming" red book, using glBitmap.
+            Multiplatform technics (using glBitmap as in red book or an image
+            as in NeHe lesson 17) are let to you. 
+            <br/>
+            So how work font object ? it pregenerate your 3D representation of 
+            your character in a display list, rendering them with glCallLists()
+            function. Unfortunately C# char are unicode with 65536 possible value.
+            too much object for memory so you should define a range of predefined 
+            object when allocating such object. when writting a string, it would
+            be your responsability to be sure than any char is in the proper range.
+            There is still work to do when mixing latin char to japanese one...
+            <br/>
+            You should know than OpenGL font are only valid in the GL context in
+            which they have been created.
+            <seealso cref="M:CsGL.OpenGL.OpenGLFont.InitRange(System.Char,System.Char)"/>
+            </summary>
+        </member>
+        <member name="T:CsGL.OpenGL.GL">
+            <summary>
+            this class hold any clean (safe) wrapper of OpenGL and GLU code, as these
+            class hold as close as possible from original C code function.
+            for any documentation report to OpenGL documentation
+            </summary>
+        </member>
+        <member name="T:CsGL.OpenGL.GLU">
+            <summary>
+            this file is simply an export in C# of function defined GL/glu.h
+            look at http://www.opengl.org for more info about using OpenGL
+            and glu library.
+            </summary>
+        </member>
+        <member name="T:CsGL.OpenGL.OpenGL">
+            <summary>
+            this file is simply an export in C# of function defined GL/GL.h
+            look at http://www.opengl.org for more info about using OpenGL
+            or buy the red and blue book
+            </summary>
+        </member>
+        <member name="F:CsGL.OpenGL.OpenGLFont.font_base">
+            <summary>
+            This is the base id of the list. when a range is initialised
+            list id from (id+first) to (id+last) should be initialised.
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLFont.Push3DTo2D">
+            <summary>
+            set the OpenGL coordinate system to 2D (no depth test, Z between -1, 1)
+            and X-Y coordinate bound to (0,0) - (width, height) 
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLFont.Pop2DTo3D">
+            <summary>
+            restore original coordinate system after a call to <code>Push3DTo2D()</code>
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLFont.Draw2DString(System.String,System.Int32,System.Int32)">
+            <summary>
+            draw a string in the control (pixel) coordinate
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLFont.DrawString(System.String)">
+            <summary>
+            draw a string at the current position
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLFont.DrawChar(System.Char)">
+            <summary>
+            draw a char at the current position
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLFont.InitRange(System.Char,System.Char)">
+            <summary>
+            Here you init a range of character. Obviously you should
+            call this method to initialize range of character before 
+            using DrawString
+            </summary>
+        </member>
+        <member name="P:CsGL.OpenGL.OpenGLFont.ListBase">
+            <summary>
+            return the base of this DisplayList. char c is item
+            ListBase + c
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.GDITextureFont.InitRange(System.Char[])">
+            <summary>
+            prepare any character you want to render...
+            </summary>
+        </member>
+        <member name="T:CsGL.OpenGL.OpenGLContext">
+            <summary>
+            this class stand for a native OpenGL context.
+            with it you could easily customize your
+            GL drawing code to different output such as image file,
+            printer or screen (control, form, ...).
+            Of course to use it you must have a good knowledge of OpenGL
+            API, you could buy the red &amp; blue book, have a look at
+            http://www.opengl.org.
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLContext.#ctor(System.Windows.Forms.Control)">
+            <summary> create an OpenGL context for a given control.
+            use all system specific OpenGL feature.
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLContext.#ctor(System.Windows.Forms.Control,CsGL.OpenGL.PIXELFORMATDESCRIPTOR)">
+            <summary> create an OpenGLContext with a given Pixel Format
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLContext.Dispose">
+            <summary>
+            dispose of OpenGL system resource.
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLContext.Valid">
+            <summary> 
+            a lot of object could work only if there is a valid context working.
+            This is method just test if there is a current valid OpenGLContext.
+            Though it could be not the correct one... beware ...
+            Used only for Dispose() purpose...
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLContext.SetPixelFormat(CsGL.OpenGL.PIXELFORMATDESCRIPTOR)">
+            <summary> 
+            called by constructor to set PixelFormat. Default implementation
+            simply do: <code>PixelFormat = PreferredPixelFormat;</code>
+            </summary>
+        </member>
+        <member name="F:CsGL.OpenGL.OpenGLContext.DefaultPixelFormat">
+            <summary>
+            default PIXELFORMATDESCRIPTOR for all newly created OpenGL 
+            control for all the application
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLContext.SwapBuffer">
+            <summary>
+            call it to SwapBuffer if you are double buffered.
+            it is also a good idea to do it before doing standart
+            gdi drawing if you want to use this feature.
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLContext.Grab">
+            <summary>
+            make this OpenGL context the current context for
+            this thread, so any further OpenGL call will act upon it
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLContext.ToImage">
+            <summary>
+            copy current the content of the frame buffer to an Image.
+            </summary>
+        </member>
+        <member name="P:CsGL.OpenGL.OpenGLContext.AvailablePixelFormats">
+            <summary>
+            get a list of available fomat. sadly it is not static
+            as the underlying system call need a drawing context id (HDC).
+            But you could call it usefully before the pixel format is set,
+            for this the obvious good place to call it is in 
+            SetPixelFormat method or PreferredPixelFormat property.
+            </summary>
+        </member>
+        <member name="P:CsGL.OpenGL.OpenGLContext.PixelFormatIndex">
+            <summary>
+            return current pixel format index or set one. it is a 0 based
+            index as standart array and unlike low level function. 
+            this index is the one in AvailablePixelFormats.
+            This accessor or PixelFormat should be setted only once or
+            will result in a bug. actually it is called in the constructor.
+            </summary>
+        </member>
+        <member name="P:CsGL.OpenGL.OpenGLContext.PixelFormat">
+            <summary>
+            get and set current pixel format, should be set
+            before any drawing. note that it is automatically set
+            to preferred pixel format in constructor.
+            This accessor or PixelFormatIndex should be setted only once or
+            will result in a bug. actually it is called in the constructor.
+            </summary>
+        </member>
+        <member name="T:CsGL.OpenGL.OpenGLControl">
+            <summary>
+            This an example implementation of OpenGLContext as a control.
+            this "an opengl view" which means you could issue OpenGL
+            command in its glDraw() method (called by default OnPaint() implementation)
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLControl.CreateContext">
+            <summary>
+            This method is called by the constructor to create the OpenGLContext
+            of the control. Override it to provide customized OpenGLContext 
+            (i.e. returning specific pixel format)
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLControl.InitGLContext">
+            <summary>
+            this method is to be called each time a GL context is created.
+            for example at the creation of the Control, before printing, etc..
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLControl.SwapBuffer">
+            <summary>
+            call it to SwapBuffer if you are double buffered.
+            it is also a good idea to do it before doing standart
+            gdi drawing if you want to use this feature.
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLControl.OnPaint(System.Windows.Forms.PaintEventArgs)">
+            <summary>
+            prepare OpenGL for rendering on this window by grabbing context and
+            call glDraw.
+            override glDraw to do gl operation.
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLControl.glDraw">
+            <summary>
+            the main drawing method. OnPaint prepare context and such stuff.
+            override this to draw..
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLControl.GrabContext">
+            <summary>
+            make this control's OpenGL context the current context for
+            this thread.
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLControl.OnSizeChanged(System.EventArgs)">
+            <summary>
+            set glViewport. subclass to set frustrum...
+            </summary>
+        </member>
+        <member name="P:CsGL.OpenGL.OpenGLControl.Context">
+            <summary>
+            return the GL context of this windows.
+            </summary>
+        </member>
+        <member name="T:CsGL.OpenGL.OpenGLException">
+            <summary>
+            standart error for 3D exception which, though rare, could
+            occur, generaly in some init process.
+            the definitive way to use it is through its 'AssertGL()' method
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLException.AssertGL">
+            <summary>
+            test an error in OpenGL engine and throw an OpenGLException 
+            with a comprehensive string error message if one is found.
+            Also test for System error if no OpenGL exception is found
+            </summary> 
+        </member>
+        <member name="T:CsGL.OpenGL.OpenGLTexture2D">
+            <summary>
+            This is an helper class to load a 2D texture from an image.
+            It is a quite simple topics, but quite repetitive so here
+            is an exemple implementation.
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLTexture2D.#ctor(System.String,System.Boolean)">
+            <param name="mipmap"> 
+            tell wether or not this texture should be registered
+            with gluBuild2DMipmaps instead of glTexImage2D.
+            </param>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLTexture2D.#ctor(System.IO.Stream,System.Boolean)">
+            <param name="mipmap"> 
+            tell wether or not this texture should be registered
+            with gluBuild2DMipmaps instead of glTexImage2D.
+            </param>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLTexture2D.#ctor(System.Drawing.Bitmap,System.Boolean)">
+            <param name="mipmap"> 
+            tell wether or not this texture should be registered
+            with gluBuild2DMipmaps instead of glTexImage2D.
+            </param>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLTexture2D.SetParameter">
+            <summary>
+            called while initializing this texture, just before call to
+            glTexImage2D/gluTexImage2D to set filter option...
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.OpenGLTexture2D.Bind">
+            <summary>
+            make this texture the current OpenGL 2D texture.
+            </summary>
+        </member>
+        <member name="T:CsGL.OpenGL.PIXELFORMATDESCRIPTOR">
+            <summary>
+            The structure holding any device material information, needed to
+            initialize OpenGL
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.PIXELFORMATDESCRIPTOR.#ctor(CsGL.OpenGL.PixelFlag,System.Byte,System.Byte)">
+            <summary>
+            build a PIXELFORMATDESCRIPTOR structure, which is necessary to init
+            any OpenGLContext.
+            </summary>
+            <param name="flags"> describe desired surface information</param>
+            <param name="cDepth"> describe desired color depth</param>
+            <param name="zDepth"> describe desired zBuffer depth</param>
+        </member>
+        <member name="T:CsGL.OpenGL.ScreenSetting">
+            <summary>
+            a structure holding any screen resolution setting.
+            </summary>
+        </member>
+        <member name="F:CsGL.OpenGL.ScreenSetting.Width">
+            <summary>the resolution in number of pixel along X-Axis (Horizontal)</summary>
+        </member>
+        <member name="F:CsGL.OpenGL.ScreenSetting.Height">
+            <summary>the resolution in number of pixel along Y-Axis (Vertical)</summary>
+        </member>
+        <member name="F:CsGL.OpenGL.ScreenSetting.BitPerPixel">
+            <summary>The color depth (in bits)</summary>
+        </member>
+        <member name="T:CsGL.OpenGL.ScreenForm">
+            <summary>
+            this is a kind of full screen windows. It could be show or hide
+            changing the screen resolution when this occur.
+            There could be only one at a time such windows visible.
+            If one is show, the previous one hide itself.
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.ScreenForm.AvailableDisplay">
+            <summary>
+            get available display mode
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.ScreenForm.#ctor(System.Int32,System.Int32)">
+            <summary>
+            init a ScreenForm with a given width and height
+            value. When shown this Form will change screen resolution 
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.ScreenForm.#ctor(CsGL.OpenGL.ScreenSetting)">
+            <summary>
+            init a ScreenForm with a given width and height
+            value. When shown this Form will change screen resolution 
+            </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.ScreenForm.SetBoundsCore(System.Int32,System.Int32,System.Int32,System.Int32,System.Windows.Forms.BoundsSpecified)">
+            <summary>only take size given at creation </summary>
+        </member>
+        <member name="M:CsGL.OpenGL.ScreenForm.SetVisibleCore(System.Boolean)">
+            <summary>swap full screen mode</summary>
+        </member>
+        <member name="P:CsGL.OpenGL.ScreenForm.Control">
+            <summary>
+            Set a control which will fill all the form.
+            Beware that this method set the 'Dock' property of the
+            control to 'DockStyle.Fill'
+            </summary>
+        </member>
+        <member name="T:CsGL.OpenGL.WGLBitmapFont">
+            <summary> 
+            this is a Windows specific (yeah, I know CsGL is 
+            windows specific, but let me think to later version...)
+            font object using wglUseFontBitmaps() function to init.
+            curiously wglUseFontOutlines() don't work (my application exit), so
+            it is not (alas) provided)
+            
+            BTW it don't work... (it don't draw..) if anyone has any idea ?
+            </summary>
+        </member>
+        <member name="T:CsGL.Util.Library">
+            <summary>this class provide some informative value
+            about ordinary dynamic library, especially usefull fo
+            conditional interop </summary>
+        </member>
+        <member name="M:CsGL.Util.Library.Check(System.String)">
+            <summary> this method return true if the given library could
+            be found in standart library path. </summary>
+        </member>
+        <member name="T:CsGL.Util.PList">
+            <summary>
+            Provides the capability to read and write OpenStep style property
+            lists. A property list is a nested stucture of <b>ArrayList</b>,
+            <b>Hashtable</b>, <b>byte[]</b> and <b>string</b>. You could, also,
+            put (optional) comment in read only string. <br/>
+            ArrayList are delimited by parentheses with individual elements
+            separated by commas and optional spaces. <br/>
+            Hashtables (i.e. NSDictionary objects in OpenStep) are delimited by
+            curly braces, with key-value pairs separated by semicolons, the
+            keys and values separated by an equal sign. <br/>
+            strings appears as plain text if they contain no whitespace, or
+            enclosed in straight quotation marks '"' if they have whitespace. <br/>
+            Byte arrays (byte[])(i.e. NSData objects in OpenStep) are delimited
+            by angled brackets and are encoded as hexadecimal digits. <br/>
+            It is also a good idea to put comment in read-only plist, to do
+            it simply put a '#' char, anything from it to end of line will be 
+            discarded. <br/>
+            Here's a short example of a text-format property list:
+            <code>
+            #
+            # -- My Super PList !
+            #
+            {
+                Title = "Star Wars";
+                Director = "Lucas, George";
+                Cast = (
+                    "Hamil, Mark",
+                    "Fisher, Carrier",
+                    "Ford, Harrison"
+                    );
+                # here my private login info
+                "credential" = &lt;040b47f9 
+                               # a bigger sets of hexa digits
+                               8484074e&gt;
+            }
+            </code>
+            <br/>
+            This object is a bit tolerant on error, bad separator
+            and such stuff, but rewrite PList correctly.
+            </summary>
+            <see cref="M:CsGL.Util.PList.Read(System.IO.TextReader)"/>
+            <see cref="M:CsGL.Util.PList.Write(System.IO.TextWriter,System.Object)"/>
+        </member>
+        <member name="M:CsGL.Util.PList.Write(System.IO.TextWriter,System.Object)">
+            <summary> write a PList (Hashtable,ArrayList,string or byte[]) in a Text stream </summary>
+        </member>
+        <member name="M:CsGL.Util.PList.Read(System.IO.TextReader)">
+            <summary> read a PList (Hashtable,ArrayList,string or byte[]) from a Text stream </summary>
+        </member>
+        <member name="M:CsGL.Util.Signal.IgnoreSignal(CsGL.Util.Signal.Value,System.Boolean)">
+            <summary>
+            remove signal handlers for a given signal.
+            </summary>
+        </member>
+        <member name="T:CsGL.Util.Signal.ExitHandler">
+            <summary>
+            Function which could be executed at program exit.
+            </summary>
+        </member>
+        <member name="T:CsGL.Util.Signal.Value">
+            <summary> list of signal that could most commonly be raised </summary>
+        </member>
+        <member name="T:CsGL.Util.Signal.Handler">
+            <summary> Signal handler, use exit() to stop or 
+            return to continue </summary>
+        </member>
+        <member name="T:CsGL.Util.Signal.Handler2">
+            <summary> Signal handler, use exit() to stop or 
+            return to continue </summary>
+        </member>
+        <member name="T:CsGL.Util.Sorter">
+            an utility class to sort Array in the growing order
+        </member>
+        <member name="M:CsGL.Util.Sorter.Size">
+            <returns>size of the sorted array</returns>
+        </member>
+        <member name="M:CsGL.Util.Sorter.Compare(System.Int32,System.Int32)">
+            <summary>compare 2 element in an array and return difference</summary>
+            <returns>difference between 2 element (a[x2] - a[x1])</returns>
+        </member>
+        <member name="M:CsGL.Util.Sorter.Swap(System.Int32,System.Int32)">
+            <summary>swap 2 element of the sorted array</summary>
+        </member>
+        <member name="M:CsGL.Util.Sorter.Sort">
+            <summary>sort the array with QuickSort</summary>
+        </member>
+        <member name="M:CsGL.Util.Sorter.SortNearlyOrdered">
+            <summary>
+            sort the array with bidir-bubble sort which is
+            faster for already ordered array but far more
+            slower on random array (n*n vs n * ln(n) operations)
+            </summary>
+        </member>
+        <member name="M:CsGL.Util.Sorter.SortMightBeOrdered">
+            <summary>
+            sort the array with a variant of QuickSort which
+            do much more test and could be 2 or 3 times slower
+            but is faster if the array is already partially ordered
+            </summary>
+        </member>
+        <member name="T:CsGL.Util.SystemError">
+            <summary>
+            this class is usefull to manipulate system error
+            </summary>
+        </member>
+        <member name="M:CsGL.Util.SystemError.GetLastError">
+            <summary>
+            return last error number id
+            </summary>
+        </member>
+        <member name="M:CsGL.Util.SystemError.GetErrorString(System.UInt32)">
+            <summary>
+            return error descriptive string
+            </summary>
+        </member>
+        <member name="M:CsGL.Util.SystemError.ClearLastError">
+            <summary>
+            clear last system error
+            </summary>
+        </member>
+    </members>
+</doc>
