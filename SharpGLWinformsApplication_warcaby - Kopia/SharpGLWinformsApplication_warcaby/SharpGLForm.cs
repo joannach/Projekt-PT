@@ -156,6 +156,7 @@ namespace SharpGLWinformsApplication_warcaby
             this.ibProcessed2 = new Emgu.CV.UI.ImageBox();
             this.button_wykryj_plansze = new System.Windows.Forms.Button();
             this.button_sprawdź = new System.Windows.Forms.Button();
+            this.richTextBox_pola = new System.Windows.Forms.RichTextBox();
             ((System.ComponentModel.ISupportInitialize)(this.ibOriginal)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ibProcessed)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.openGLControl)).BeginInit();
@@ -529,9 +530,19 @@ namespace SharpGLWinformsApplication_warcaby
             this.button_sprawdź.UseVisualStyleBackColor = true;
             this.button_sprawdź.Click += new System.EventHandler(this.button_sprawdź_Click);
             // 
+            // richTextBox_pola
+            // 
+            this.richTextBox_pola.Location = new System.Drawing.Point(536, 154);
+            this.richTextBox_pola.Name = "richTextBox_pola";
+            this.richTextBox_pola.Size = new System.Drawing.Size(340, 109);
+            this.richTextBox_pola.TabIndex = 17;
+            this.richTextBox_pola.TabStop = false;
+            this.richTextBox_pola.Text = "";
+            // 
             // SharpGLForm
             // 
             this.ClientSize = new System.Drawing.Size(1329, 708);
+            this.Controls.Add(this.richTextBox_pola);
             this.Controls.Add(this.button_sprawdź);
             this.Controls.Add(this.button_wykryj_plansze);
             this.Controls.Add(this.ibProcessed2);
@@ -782,10 +793,12 @@ namespace SharpGLWinformsApplication_warcaby
             if (raz_X == 0 || dwa_X == 0 || trzy_X == 0)
             {
                 MessageBox.Show("Nie wykryto planszy! Wybierz - wykryj plasze!");
-
             }
             else
             {
+                Pole pole = new Pole();
+
+
                 //test 
                 dwa_X = 33;
                 dwa_Y = 9;
@@ -824,34 +837,78 @@ namespace SharpGLWinformsApplication_warcaby
                 polowa_szer_pola = rozmiar_pola_szer / 2;
                 polowa_wys_pola = rozmiar_pola_wys / 2;
 
+               float nowa_polowa_szer = polowa_szer_pola;
+               float nowa_polowa_wys = polowa_wys_pola;
+
+               char nazwa = 'A';
+               int nazwa_int = 1;
+               
                 //srodki pol 
-                float[][] tablica_srodkow = new float[32][];
-                for (int i = 0; i < 32; i++)
+                Pole[,] pola = new Pole[8,8];
+                for (int i = 0; i < 8; i++)
                 {
-                    tablica_srodkow[i] = new float[2];
-                }
+                    //float nowa_polowa = polowa_szer_pola; 
+                    for(int j=0; j<8;j++)
+                    {
+                        pola[i, j] = new Pole();
+                        if (i == 0 )
+                        {
+                            pola[i,j].X = polowa_szer_pola;
+                            pola[i, j].nazwa += nazwa;
 
-                float x = polowa_szer_pola;
-                float y = polowa_wys_pola;
-
-                float polowa_szer_pola_ = polowa_szer_pola;
-
-                for (int i=0; i<8 ; i++)
-                {
-                    tablica_srodkow[i][0] = gorny_lewy_X + polowa_szer_pola_;
-                    tablica_srodkow[i][1] = gorny_lewy_Y + polowa_wys_pola;
-
-                    polowa_szer_pola_ += 2 * polowa_szer_pola;
-
+                        }
+                        else
+                        {
+                            pola[i,j].X = nowa_polowa_szer;
+                            pola[i, j].nazwa += (nazwa++).ToString();
+                        }
+                        
+                        
+                    }
+                    nowa_polowa_szer += 2 * polowa_szer_pola;
+                    nazwa = 'A';
                      
-                    //polowa_wys_pola += polowa_wys_pola; 
+
+                    
                 }
 
-
-                for (int i = 0; i < 32; i++)
+                for (int i = 0; i < 8; i++)
                 {
-                     MessageBox.Show(  "X :" + tablica_srodkow[i][0].ToString()) ;
-                    MessageBox.Show( "Y : " + tablica_srodkow[i][1].ToString());
+                    //float nowa_polowa = polowa_szer_pola; 
+                    for (int j = 0; j < 8; j++)
+                    {
+                        if (j == 0)
+                        {
+                            pola[i, j].Y = polowa_wys_pola;
+                            pola[i, j].nazwa += nazwa_int.ToString();
+
+                        }
+                        else
+                        {
+                            pola[i, j].Y = nowa_polowa_wys;
+                            pola[i, j].nazwa += (nazwa_int++).ToString();
+                        }
+                        nowa_polowa_wys += 2 * polowa_wys_pola;
+                    }
+
+                    nowa_polowa_wys = polowa_wys_pola;
+                    nazwa_int = 1;
+
+                  
+                }
+
+        
+
+
+                for (int i = 0; i < 8; i++)
+                {
+                    for (int j = 0; j < 8; j++)
+                    {
+                        richTextBox_pola.AppendText("X: " + pola[i, j].X.ToString());
+                        richTextBox_pola.AppendText(" Y : " + pola[i, j].Y.ToString());
+                        richTextBox_pola.AppendText("  nazwa : : " + pola[i, j].nazwa);
+                         
+                    }
                      
                 } 
 
@@ -1125,209 +1182,7 @@ namespace SharpGLWinformsApplication_warcaby
                 textBox_stan_ruchy_wykonane.Text = liczba_wykonanych_ruchow.ToString();
             }
             //////// 
-    /*
-
-            try
-            {
-                capWebcam = new Capture();   // przechwytywanie 
-            }
-            catch (NullReferenceException except)
-            {
-                txtXYZPromien.Text = except.Message;
-
-                return;
-            }
-
-            //gdy mamy wlasciwy obiekt do przechwycenia
-            //dodajemy funkcje obrazu do listy zadań aplikacji
-
-            //Application.Idle += procesRamkaIAktualizacjaGUI;   // wystąienie zdarzenia - pojawienie się przedmiotu przed ramką - wywolanie funkcji  
-            przechwytywanie = true;
-            ////////
-            
-              zdjOryginalne = capWebcam.QueryFrame();  // do zdj wczytywanie obrazu przechwyconego z kamery 
-            if (zdjOryginalne == null)
-                return;
-
-            zdjTworzone = zdjOryginalne.InRange(new Bgr(4, 0, 115), new Bgr(98, 93, 255)); // czerwone - zakres sczytywania pionkow czerwonych
-            zdjTworzone2 = zdjOryginalne.InRange(new Bgr(0, 140, 21), new Bgr(113, 254, 110)); // zielone - zakres sczytywania pionkow zielonych
-
-            CircleF[] circles = zdjTworzone.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0];
-            //tutaj następuje określenie i wpisanie do tablicy miejsc występowania pionków czerwonych
-            CircleF[] circles2 = zdjTworzone2.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0];
-            //tutaj następuje określenie i wpisanie do tablicy miejsc występowania pionków zielonych
-
-            // InRange sprawdza czy elementy obrazu leżą pomiędza dwoma zmiennymi skalarnymi
-            // TColor <byte> {lower hihger} - TColor byte
-           // zdjTworzone = zdjTworzone.SmoothGaussian(9);
-
-            textBox_stan_zielone_pionki.Clear();
-            textBox_stan_czerwone_pionki.Clear();
-            polaczerwone.Clear();
-            polazielone.Clear();
-            czerwony_znacznik = 0;
-            zielony_znacznik = 0;
-            int[] t1 = new int[40];
-            int[] t2 = new int[40];
-            int[] pozycje = new int[32];
-            for (int i = 0; i <= 39; i++)
-            {
-                t2[i] = 0;
-            } //wpisanie do tablicy pionków czerwonych
-
-           
-            //////
-             
-
-            foreach (CircleF cricle in circles)
-            {
-                czerwony_znacznik++;
-                //Zczytywanie pozycji
-                for (int i = 0; i < 32; i++)
-                {
-                    
-                    if ((cricle.Center.X >= pola_final[i][2]) && (cricle.Center.X <= pola_final[i][0]) && (cricle.Center.Y >= pola_final[i][3]) && (cricle.Center.Y <= pola_final[i][1]))
-                    {
-                        polaczerwone.AppendText("Pionek nr " + czerwony_znacznik + " pole nr " + pola[i]);
-                        t2[i] = czerwony_znacznik;
-                        pozycje[i] = 2;
-                    }
-                    //else
-                    ///{
-                      //  MessageBox.Show("blad 123");
-                    //}
-                }
-                polaczerwone.AppendText(Environment.NewLine);
-                MCvFont f = new MCvFont(FONT.CV_FONT_HERSHEY_COMPLEX, 0.6, 0.6);
-                zdjOryginalne.Draw(czerwony_znacznik.ToString(), ref f, new Point((int)cricle.Center.X - 6, (int)cricle.Center.Y), new Bgr(0, 255, 246));
-                zdjOryginalne.Draw(cricle, new Bgr(Color.Red), 3); //rysowanie na obrazku pionków czerwonych
-            }
-            ruchy.AppendText("\n");
-            textBox_stan_czerwone_pionki.AppendText(czerwony_znacznik.ToString());
-            for (int i = 0; i <= 39; i++)
-            {
-                t1[i] = 0;
-            } //wpisanie do tablicy pionków zielonych
-            foreach (CircleF cricle2 in circles2)
-            {
-                zielony_znacznik++;
-            //Zczytywanie pozycjicricle
-            for (int i = 0; i <= 31; i++)
-            {
-
-                int [][] pola_final = new int [32][];
-                 if ((cricle2.Center.X >= pola_final[i][2]) && (cricle2.Center.X <= pola_final[i][0]) && (cricle2.Center.Y >= pola_final[i][3]) && (cricle2.Center.Y <= pola_final[i][1]))
-                 {
-                    polazielone.AppendText("Pionek nr " + zielony_znacznik + " pole nr " + pola[i]);
-                    t1[i] = zielony_znacznik;
-                    pozycje[i] = 1;
-                 }  
-             }
-                 polazielone.AppendText(Environment.NewLine);
-                MCvFont f = new MCvFont(FONT.CV_FONT_HERSHEY_COMPLEX, 0.6, 0.6);
-               zdjOryginalne.Draw(zielony_znacznik.ToString(), ref f, new Point((int)cricle2.Center.X - 6, (int)cricle2.Center.Y), new Bgr(0, 255, 246));
-               zdjOryginalne.Draw(cricle2,
-                new Bgr(Color.Green),
-                   3);
-            }
-
-            textBox_stan_zielone_pionki.AppendText(zielony_znacznik.ToString());
-            for (int i = 0; i < 32; i++)
-            {
-                srodki_pol[i] = new double[2];
-            }
-            int kroki = 0;
-            double x = 82.5, y = 82.5;
-            for (int i = 0; i < 32; i++)
-            {
-                if ((i % 4 == 0) && (i != 0))
-                {
-                    kroki++;
-                    y += 54.5;
-                    if (kroki == 0) { x = 82.5; }
-                    else { x = 135.5; }
-                }
-                srodki_pol[i][0] = x;
-                srodki_pol[i][1] = y;
-                x += 106;
-            }
-            ruchy.Clear();
-            bicia.Clear();
-            int ile_ruchy = 0;
-            int ile_bicia = 0;
-            //13 str
-            //możliwe ruchy dla pionkow zielonych
-    if (ktory_obrot == 2)
-    {
-        for (int i = 31; i > 3; i--)
-        {
-            //proste ruchy bez bicia
-            //z prawych pól do przodu
-            if ((i % 8 == 3) && (t1[i] != 0) && (pozycje[i - 4] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 4] + "\n"); ile_ruchy++; }
-            //z lewych pól do przodu
-            if ((i % 8 == 4) && (t1[i] != 0) && (pozycje[i - 4] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 4] + "\n"); ile_ruchy++; }
-            //pierwsza linia do przodu w prawo
-            if ((i % 8 < 3) && (t1[i] != 0) && (pozycje[i - 3] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 3] + "\n"); ile_ruchy++; }
-            //pierwsza linia do przodu w lewo
-            if ((i % 8 < 3) && (t1[i] != 0) && (pozycje[i - 4] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 4] + "\n"); ile_ruchy++; }
-                //druga linia do przodu w prawo
-            if ((i % 8 > 4) && (i % 8 <= 7) && (t1[i] != 0) && (pozycje[i - 4] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 4] + "\n"); ile_ruchy++; }
-            //druga linia do przodu w lewo
-            if ((i % 8 > 4) && (i % 8 <= 7) && (t1[i] != 0) && (pozycje[i - 5] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 5] + "\n"); ile_ruchy++; }
-            if (i > 7)
-            {
-                //bicia
-                //z prawych pól do przodu
-                if ((i % 8 == 3) && (t1[i] != 0) && (t2[i - 4] != 0) && (pozycje[i - 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 9] + "\n"); ile_bicia++; }
-                //z lewych pól do przodu
-                if ((i % 8 == 4) && (t1[i] != 0) && (t2[i - 4] != 0) && (pozycje[i - 3] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 7] + "\n"); ile_bicia++; }
-                //pierwsza linia do przodu w prawo
-                if ((i % 8 < 3) && (t1[i] != 0) && (t2[i - 3] != 0) && (pozycje[i - 7] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 7] + "\n"); ile_bicia++; }
-                //pierwsza linia do przodu w lewo
-                if ((i % 8 < 3) && (t1[i] != 0) && (t2[i - 4] != 0) && (pozycje[i - 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 9] + "\n"); ile_bicia++; }
-                //druga linia do przodu w prawo
-                if ((i % 8 > 4) && (i % 8 <= 7) && (t1[i] != 0) && (t2[i - 4] != 0) && (pozycje[i - 7] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 7] + "\n"); ile_bicia++; }
-                        //druga linia do przodu w lewo
-                if ((i % 8 > 4) && (i % 8 <= 7) && (t1[i] != 0) && (t2[i - 5] != 0) && (pozycje[i - 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 9] + "\n"); ile_bicia++; }
-            }
-           }
-        }
-        if (ktory_obrot == 1)
-        {
-        //ruchy dla pionkow czerwonych
-            for (int i = 0; i < 28; i++)
-            {
-                //proste ruchy bez bicia
-                //z prawych pól do przodu
-                if ((i % 8 == 3) && (t2[i] != 0) && (pozycje[i + 4] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 4] + "\n"); ile_ruchy++; }
-                //z lewych pól do przodu
-                if ((i % 8 == 4) && (t2[i] != 0) && (pozycje[i + 4] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 4] + "\n"); ile_ruchy++; }
-                //pierwsza linia do przodu w prawo
-                if ((i % 8 < 3) && (t2[i] != 0) && (pozycje[i + 5] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 5] + "\n"); ile_ruchy++; }
-                //pierwsza linia do przodu w lewo
-                if ((i % 8 < 3) && (t2[i] != 0) && (pozycje[i + 4] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 4] + "\n"); ile_ruchy++; }
-                    //druga linia do przodu w prawo
-                if ((i % 8 > 4) && (i % 8 <= 7) && (t2[i] != 0) && (pozycje[i + 4] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 4] + "\n"); ile_ruchy++; }
-                //druga linia do przodu w lewo
-                if ((i % 8 > 4) && (i % 8 <= 7) && (t2[i] != 0) && (pozycje[i + 3] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 3] + "\n"); ile_ruchy++; }
-                if (i < 24)
-                {
-                    //bicia
-                    //z prawych pól do przodu
-                    if ((i % 8 == 3) && (t2[i] != 0) && (t1[i + 4] != 0) && (pozycje[i + 7] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 7] + "\n"); ile_bicia++; }
-                    //z lewych pól do przodu
-                    if ((i % 8 == 4) && (t2[i] != 0) && (t1[i + 4] != 0) && (pozycje[i + 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 9] + "\n"); ile_bicia++; }
-                    //pierwsza linia do przodu w prawo
-                    if ((i % 8 < 3) && (t2[i] != 0) && (t1[i + 4] != 0) && (pozycje[i + 7] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 7] + "\n"); ile_bicia++; }
-                    //pierwsza linia do przodu w lewo
-                    if ((i % 8 < 3) && (t2[i] != 0) && (t1[i + 5] != 0) && (pozycje[i + 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 9] + "\n"); ile_bicia++; }
-                            //druga linia do przodu w prawo
-                    if ((i % 8 > 4) && (i % 8 <= 7) && (t2[i] != 0) && (t1[i + 3] != 0) && (pozycje[i + 7] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 7] + "\n"); ile_bicia++; }
-                    //druga linia do przodu w lewo
-                    if ((i % 8 > 4) && (i % 8 <= 7) && (t2[i] != 0) && (t1[i + 4] != 0) && (pozycje[i + 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 9] + "\n"); ile_bicia++; }
-                }
-            }
-        }*/
+     
             
       }
 

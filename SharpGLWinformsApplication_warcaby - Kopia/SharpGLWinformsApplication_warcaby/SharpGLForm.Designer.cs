@@ -55,6 +55,7 @@
        private Emgu.CV.UI.ImageBox ibProcessed2;
        private System.Windows.Forms.Button button_wykryj_plansze;
        private System.Windows.Forms.Button button_sprawdź;
+       private System.Windows.Forms.RichTextBox richTextBox_pola;
    }
 }
 
