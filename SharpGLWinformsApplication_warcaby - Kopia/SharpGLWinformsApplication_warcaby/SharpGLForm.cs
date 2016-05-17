@@ -44,9 +44,41 @@ namespace SharpGLWinformsApplication_warcaby
         bool przechwytywanie = false;
         Image<Bgr, Byte> zdjOryginalne;
         Image<Gray, Byte> zdjTworzone;
+        Image<Gray, Byte> zdjTworzone2;
+        Image<Gray, Byte> zdjTworzone3; 
+        Image<Gray, Byte> szare;
+
+        int czerwony_znacznik = 0;
+        int zielony_znacznik = 0;
+        int[][] pola_final = new int[32][];
+        string[] pola = new string[40];
+        double[][] srodki_pol = new double[32][];
+
+        int ktory_obrot = 2;
+
+        //koordynaty 
+
+        float raz_X = 0;
+        float dwa_X = 0;
+        float trzy_X = 0;
+        float raz_Y = 0;
+        float dwa_Y = 0;
+        float trzy_Y = 0;
+        float raz_prom = 0;
+        float dwa_prom = 0;
+        float trzy_prom = 0;
+
+        //wymiary planszy
+        float wysokosc = 0;
+        float szerokosc = 0;
+
+        int delay = 0;
+
        // Texture Textures = new Texture();
 
         float rtri = 0;
+
+
 
         //Textures_ texture = new Textures_();
         Texture texture = new Texture();
@@ -62,23 +94,25 @@ namespace SharpGLWinformsApplication_warcaby
 
         }
 
-
-
         public SharpGLForm()
         {
-            InitializeComponent();
-
-           // this.window = new Form1();
-            //this.window.Parent = this; // było samo this, czyli ze rodzicem jest główne okno. Wiec zmieniasz na
-           // this.window.Dock = DockStyle.Fill;
-           // window.Show();
-
-           // window.Pokaz();
+            InitializeComponent();            
             SharpGL.OpenGL gl = this.openGLControl.OpenGL;
-
             gl.Enable(OpenGL.GL_TEXTURE_2D);
-            //texture.Create(gl, "szach.bmp");
-            texture.Create(gl, "C://Users/dom/Desktop/szach.bmp");
+            texture.Create(gl, "C://Users/dom/Desktop/szach.bmp");   // lub szachownica.bmp (8x8)
+
+
+            textBox_stan_zielone_pionki.Text = "0";
+            textBox_stan_czerwone_pionki.Text = "0";
+            textBox_stan_bicia_mozliwe.Text = "0";
+            textBox_stan_ruchy.Text = "0";
+            textBox_stan_ruchy_wykonane.Text = "0";
+            bicia.AppendText("brak\n");
+            ruchy.AppendText("brak\n");
+            polaczerwone.AppendText("brak\n");
+            polazielone.AppendText("brak\n");
+            label_ruch.Text = "Ruch: zielone";
+            label_ruch.BackColor = Color.Green;
         }
 
         private void InitializeComponent()
@@ -92,28 +126,36 @@ namespace SharpGLWinformsApplication_warcaby
             this.openGLControl = new SharpGL.OpenGLControl();
             this.label1 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.textBox_mozliwe_ruchy = new System.Windows.Forms.TextBox();
+            this.ruchy = new System.Windows.Forms.TextBox();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.panel3 = new System.Windows.Forms.Panel();
+            this.bicia = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.textBox_mozliwe_bicia = new System.Windows.Forms.TextBox();
+            this.panel3 = new System.Windows.Forms.Panel();
+            this.polazielone = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.panel4 = new System.Windows.Forms.Panel();
-            this.label4 = new System.Windows.Forms.Label();
+            this.polaczerwone = new System.Windows.Forms.TextBox();
+            this.label_czerwone = new System.Windows.Forms.Label();
             this.panel5 = new System.Windows.Forms.Panel();
-            this.label5 = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.label8 = new System.Windows.Forms.Label();
-            this.label9 = new System.Windows.Forms.Label();
-            this.label10 = new System.Windows.Forms.Label();
-            this.textBox_stan_czarne_pionki = new System.Windows.Forms.TextBox();
-            this.textBox_stan_biale_pionki = new System.Windows.Forms.TextBox();
-            this.textBox_stan_ruchy = new System.Windows.Forms.TextBox();
-            this.textBox_stan_ruchy_wykonane = new System.Windows.Forms.TextBox();
             this.textBox_stan_bicia_mozliwe = new System.Windows.Forms.TextBox();
+            this.textBox_stan_ruchy_wykonane = new System.Windows.Forms.TextBox();
+            this.textBox_stan_ruchy = new System.Windows.Forms.TextBox();
+            this.textBox_stan_czerwone_pionki = new System.Windows.Forms.TextBox();
+            this.textBox_stan_zielone_pionki = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
             this.panel6 = new System.Windows.Forms.Panel();
             this.label11 = new System.Windows.Forms.Label();
+            this.button_ruch_przeciwnika = new System.Windows.Forms.Button();
+            this.panel7 = new System.Windows.Forms.Panel();
+            this.label_ruch = new System.Windows.Forms.Label();
+            this.ibProcessed2 = new Emgu.CV.UI.ImageBox();
+            this.button_wykryj_plansze = new System.Windows.Forms.Button();
+            this.button_sprawdź = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.ibOriginal)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ibProcessed)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.openGLControl)).BeginInit();
@@ -123,6 +165,8 @@ namespace SharpGLWinformsApplication_warcaby
             this.panel4.SuspendLayout();
             this.panel5.SuspendLayout();
             this.panel6.SuspendLayout();
+            this.panel7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ibProcessed2)).BeginInit();
             this.SuspendLayout();
             // 
             // ibOriginal
@@ -199,39 +243,41 @@ namespace SharpGLWinformsApplication_warcaby
             // 
             // panel1
             // 
-            this.panel1.Controls.Add(this.textBox_mozliwe_ruchy);
+            this.panel1.Controls.Add(this.ruchy);
             this.panel1.Controls.Add(this.label1);
             this.panel1.Location = new System.Drawing.Point(12, 12);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(243, 131);
             this.panel1.TabIndex = 7;
             // 
-            // textBox_mozliwe_ruchy
+            // ruchy
             // 
-            this.textBox_mozliwe_ruchy.Location = new System.Drawing.Point(0, 16);
-            this.textBox_mozliwe_ruchy.Multiline = true;
-            this.textBox_mozliwe_ruchy.Name = "textBox_mozliwe_ruchy";
-            this.textBox_mozliwe_ruchy.ReadOnly = true;
-            this.textBox_mozliwe_ruchy.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox_mozliwe_ruchy.Size = new System.Drawing.Size(240, 111);
-            this.textBox_mozliwe_ruchy.TabIndex = 7;
+            this.ruchy.Location = new System.Drawing.Point(0, 16);
+            this.ruchy.Multiline = true;
+            this.ruchy.Name = "ruchy";
+            this.ruchy.ReadOnly = true;
+            this.ruchy.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.ruchy.Size = new System.Drawing.Size(240, 111);
+            this.ruchy.TabIndex = 7;
             // 
             // panel2
             // 
-            this.panel2.Controls.Add(this.textBox_mozliwe_bicia);
+            this.panel2.Controls.Add(this.bicia);
             this.panel2.Controls.Add(this.label2);
             this.panel2.Location = new System.Drawing.Point(271, 12);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(243, 131);
             this.panel2.TabIndex = 8;
             // 
-            // panel3
+            // bicia
             // 
-            this.panel3.Controls.Add(this.label3);
-            this.panel3.Location = new System.Drawing.Point(530, 12);
-            this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(103, 131);
-            this.panel3.TabIndex = 9;
+            this.bicia.Location = new System.Drawing.Point(3, 16);
+            this.bicia.Multiline = true;
+            this.bicia.Name = "bicia";
+            this.bicia.ReadOnly = true;
+            this.bicia.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.bicia.Size = new System.Drawing.Size(240, 111);
+            this.bicia.TabIndex = 8;
             // 
             // label2
             // 
@@ -242,49 +288,69 @@ namespace SharpGLWinformsApplication_warcaby
             this.label2.TabIndex = 0;
             this.label2.Text = "Możliwe bicia:";
             // 
-            // textBox_mozliwe_bicia
+            // panel3
             // 
-            this.textBox_mozliwe_bicia.Location = new System.Drawing.Point(3, 16);
-            this.textBox_mozliwe_bicia.Multiline = true;
-            this.textBox_mozliwe_bicia.Name = "textBox_mozliwe_bicia";
-            this.textBox_mozliwe_bicia.ReadOnly = true;
-            this.textBox_mozliwe_bicia.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox_mozliwe_bicia.Size = new System.Drawing.Size(240, 111);
-            this.textBox_mozliwe_bicia.TabIndex = 8;
+            this.panel3.Controls.Add(this.polazielone);
+            this.panel3.Controls.Add(this.label3);
+            this.panel3.Location = new System.Drawing.Point(530, 12);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(103, 131);
+            this.panel3.TabIndex = 9;
+            // 
+            // polazielone
+            // 
+            this.polazielone.Location = new System.Drawing.Point(3, 16);
+            this.polazielone.Multiline = true;
+            this.polazielone.Name = "polazielone";
+            this.polazielone.ReadOnly = true;
+            this.polazielone.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.polazielone.Size = new System.Drawing.Size(100, 112);
+            this.polazielone.TabIndex = 9;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(3, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(74, 13);
+            this.label3.Size = new System.Drawing.Size(75, 13);
             this.label3.TabIndex = 0;
-            this.label3.Text = "Pionki czarne:";
+            this.label3.Text = "Pionki zielone:";
             // 
             // panel4
             // 
-            this.panel4.Controls.Add(this.label4);
+            this.panel4.Controls.Add(this.polaczerwone);
+            this.panel4.Controls.Add(this.label_czerwone);
             this.panel4.Location = new System.Drawing.Point(650, 12);
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(103, 131);
             this.panel4.TabIndex = 10;
             // 
-            // label4
+            // polaczerwone
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(3, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(66, 13);
-            this.label4.TabIndex = 0;
-            this.label4.Text = "Pionki białe:";
+            this.polaczerwone.Location = new System.Drawing.Point(3, 19);
+            this.polaczerwone.Multiline = true;
+            this.polaczerwone.Name = "polaczerwone";
+            this.polaczerwone.ReadOnly = true;
+            this.polaczerwone.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.polaczerwone.Size = new System.Drawing.Size(100, 112);
+            this.polaczerwone.TabIndex = 10;
+            // 
+            // label_czerwone
+            // 
+            this.label_czerwone.AutoSize = true;
+            this.label_czerwone.Location = new System.Drawing.Point(3, 0);
+            this.label_czerwone.Name = "label_czerwone";
+            this.label_czerwone.Size = new System.Drawing.Size(88, 13);
+            this.label_czerwone.TabIndex = 0;
+            this.label_czerwone.Text = "Pionki czerwone:";
             // 
             // panel5
             // 
             this.panel5.Controls.Add(this.textBox_stan_bicia_mozliwe);
             this.panel5.Controls.Add(this.textBox_stan_ruchy_wykonane);
             this.panel5.Controls.Add(this.textBox_stan_ruchy);
-            this.panel5.Controls.Add(this.textBox_stan_biale_pionki);
-            this.panel5.Controls.Add(this.textBox_stan_czarne_pionki);
+            this.panel5.Controls.Add(this.textBox_stan_czerwone_pionki);
+            this.panel5.Controls.Add(this.textBox_stan_zielone_pionki);
             this.panel5.Controls.Add(this.label10);
             this.panel5.Controls.Add(this.label9);
             this.panel5.Controls.Add(this.label8);
@@ -296,6 +362,92 @@ namespace SharpGLWinformsApplication_warcaby
             this.panel5.Size = new System.Drawing.Size(243, 131);
             this.panel5.TabIndex = 9;
             // 
+            // textBox_stan_bicia_mozliwe
+            // 
+            this.textBox_stan_bicia_mozliwe.Location = new System.Drawing.Point(157, 108);
+            this.textBox_stan_bicia_mozliwe.Name = "textBox_stan_bicia_mozliwe";
+            this.textBox_stan_bicia_mozliwe.ReadOnly = true;
+            this.textBox_stan_bicia_mozliwe.Size = new System.Drawing.Size(59, 20);
+            this.textBox_stan_bicia_mozliwe.TabIndex = 13;
+            // 
+            // textBox_stan_ruchy_wykonane
+            // 
+            this.textBox_stan_ruchy_wykonane.Location = new System.Drawing.Point(157, 84);
+            this.textBox_stan_ruchy_wykonane.Name = "textBox_stan_ruchy_wykonane";
+            this.textBox_stan_ruchy_wykonane.ReadOnly = true;
+            this.textBox_stan_ruchy_wykonane.Size = new System.Drawing.Size(59, 20);
+            this.textBox_stan_ruchy_wykonane.TabIndex = 12;
+            // 
+            // textBox_stan_ruchy
+            // 
+            this.textBox_stan_ruchy.Location = new System.Drawing.Point(157, 60);
+            this.textBox_stan_ruchy.Name = "textBox_stan_ruchy";
+            this.textBox_stan_ruchy.ReadOnly = true;
+            this.textBox_stan_ruchy.Size = new System.Drawing.Size(59, 20);
+            this.textBox_stan_ruchy.TabIndex = 11;
+            // 
+            // textBox_stan_czerwone_pionki
+            // 
+            this.textBox_stan_czerwone_pionki.Location = new System.Drawing.Point(157, 38);
+            this.textBox_stan_czerwone_pionki.Name = "textBox_stan_czerwone_pionki";
+            this.textBox_stan_czerwone_pionki.ReadOnly = true;
+            this.textBox_stan_czerwone_pionki.Size = new System.Drawing.Size(59, 20);
+            this.textBox_stan_czerwone_pionki.TabIndex = 10;
+            // 
+            // textBox_stan_zielone_pionki
+            // 
+            this.textBox_stan_zielone_pionki.Location = new System.Drawing.Point(157, 16);
+            this.textBox_stan_zielone_pionki.Name = "textBox_stan_zielone_pionki";
+            this.textBox_stan_zielone_pionki.ReadOnly = true;
+            this.textBox_stan_zielone_pionki.Size = new System.Drawing.Size(59, 20);
+            this.textBox_stan_zielone_pionki.TabIndex = 9;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(6, 91);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(142, 13);
+            this.label10.TabIndex = 5;
+            this.label10.Text = "Liczba wykonanych ruchów:";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(6, 110);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(109, 13);
+            this.label9.TabIndex = 4;
+            this.label9.Text = "Liczba możliwych bić:";
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(6, 67);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(130, 13);
+            this.label8.TabIndex = 3;
+            this.label8.Text = "Liczba możliwych ruchów:";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(6, 41);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(144, 13);
+            this.label7.TabIndex = 2;
+            this.label7.Text = "Liczba czerwonych pionków:";
+            this.label7.Click += new System.EventHandler(this.label7_Click);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(6, 19);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(131, 13);
+            this.label6.TabIndex = 1;
+            this.label6.Text = "Liczba zielonych pionków:";
+            // 
             // label5
             // 
             this.label5.AutoSize = true;
@@ -304,92 +456,6 @@ namespace SharpGLWinformsApplication_warcaby
             this.label5.Size = new System.Drawing.Size(49, 13);
             this.label5.TabIndex = 0;
             this.label5.Text = "Stan gry:";
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(6, 19);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(121, 13);
-            this.label6.TabIndex = 1;
-            this.label6.Text = "Ilość czarnych pionków:";
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(6, 41);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(113, 13);
-            this.label7.TabIndex = 2;
-            this.label7.Text = "Ilość białych pionków:";
-            this.label7.Click += new System.EventHandler(this.label7_Click);
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(6, 67);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(121, 13);
-            this.label8.TabIndex = 3;
-            this.label8.Text = "Ilość możliwych ruchów:";
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(6, 110);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(100, 13);
-            this.label9.TabIndex = 4;
-            this.label9.Text = "Ilość możliwych bić:";
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(6, 91);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(133, 13);
-            this.label10.TabIndex = 5;
-            this.label10.Text = "Ilość wykonanych ruchów:";
-            // 
-            // textBox_stan_czarne_pionki
-            // 
-            this.textBox_stan_czarne_pionki.Location = new System.Drawing.Point(145, 16);
-            this.textBox_stan_czarne_pionki.Name = "textBox_stan_czarne_pionki";
-            this.textBox_stan_czarne_pionki.ReadOnly = true;
-            this.textBox_stan_czarne_pionki.Size = new System.Drawing.Size(59, 20);
-            this.textBox_stan_czarne_pionki.TabIndex = 9;
-            // 
-            // textBox_stan_biale_pionki
-            // 
-            this.textBox_stan_biale_pionki.Location = new System.Drawing.Point(145, 38);
-            this.textBox_stan_biale_pionki.Name = "textBox_stan_biale_pionki";
-            this.textBox_stan_biale_pionki.ReadOnly = true;
-            this.textBox_stan_biale_pionki.Size = new System.Drawing.Size(59, 20);
-            this.textBox_stan_biale_pionki.TabIndex = 10;
-            // 
-            // textBox_stan_ruchy
-            // 
-            this.textBox_stan_ruchy.Location = new System.Drawing.Point(145, 60);
-            this.textBox_stan_ruchy.Name = "textBox_stan_ruchy";
-            this.textBox_stan_ruchy.ReadOnly = true;
-            this.textBox_stan_ruchy.Size = new System.Drawing.Size(59, 20);
-            this.textBox_stan_ruchy.TabIndex = 11;
-            // 
-            // textBox_stan_ruchy_wykonane
-            // 
-            this.textBox_stan_ruchy_wykonane.Location = new System.Drawing.Point(145, 84);
-            this.textBox_stan_ruchy_wykonane.Name = "textBox_stan_ruchy_wykonane";
-            this.textBox_stan_ruchy_wykonane.ReadOnly = true;
-            this.textBox_stan_ruchy_wykonane.Size = new System.Drawing.Size(59, 20);
-            this.textBox_stan_ruchy_wykonane.TabIndex = 12;
-            // 
-            // textBox_stan_bicia_mozliwe
-            // 
-            this.textBox_stan_bicia_mozliwe.Location = new System.Drawing.Point(145, 107);
-            this.textBox_stan_bicia_mozliwe.Name = "textBox_stan_bicia_mozliwe";
-            this.textBox_stan_bicia_mozliwe.ReadOnly = true;
-            this.textBox_stan_bicia_mozliwe.Size = new System.Drawing.Size(59, 20);
-            this.textBox_stan_bicia_mozliwe.TabIndex = 13;
             // 
             // panel6
             // 
@@ -408,9 +474,69 @@ namespace SharpGLWinformsApplication_warcaby
             this.label11.TabIndex = 0;
             this.label11.Text = "Obserwacja stanu gry w czasie rzeczywistym:";
             // 
+            // button_ruch_przeciwnika
+            // 
+            this.button_ruch_przeciwnika.Location = new System.Drawing.Point(12, 149);
+            this.button_ruch_przeciwnika.Name = "button_ruch_przeciwnika";
+            this.button_ruch_przeciwnika.Size = new System.Drawing.Size(108, 23);
+            this.button_ruch_przeciwnika.TabIndex = 12;
+            this.button_ruch_przeciwnika.Text = "ruch przeciwnika";
+            this.button_ruch_przeciwnika.UseVisualStyleBackColor = true;
+            this.button_ruch_przeciwnika.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // panel7
+            // 
+            this.panel7.Controls.Add(this.label_ruch);
+            this.panel7.Location = new System.Drawing.Point(149, 149);
+            this.panel7.Name = "panel7";
+            this.panel7.Size = new System.Drawing.Size(200, 23);
+            this.panel7.TabIndex = 13;
+            // 
+            // label_ruch
+            // 
+            this.label_ruch.AutoSize = true;
+            this.label_ruch.Location = new System.Drawing.Point(3, 5);
+            this.label_ruch.Name = "label_ruch";
+            this.label_ruch.Size = new System.Drawing.Size(39, 13);
+            this.label_ruch.TabIndex = 0;
+            this.label_ruch.Text = "Ruch: ";
+            // 
+            // ibProcessed2
+            // 
+            this.ibProcessed2.Location = new System.Drawing.Point(901, 154);
+            this.ibProcessed2.Name = "ibProcessed2";
+            this.ibProcessed2.Size = new System.Drawing.Size(129, 109);
+            this.ibProcessed2.TabIndex = 14;
+            this.ibProcessed2.TabStop = false;
+            // 
+            // button_wykryj_plansze
+            // 
+            this.button_wykryj_plansze.Location = new System.Drawing.Point(382, 149);
+            this.button_wykryj_plansze.Name = "button_wykryj_plansze";
+            this.button_wykryj_plansze.Size = new System.Drawing.Size(132, 23);
+            this.button_wykryj_plansze.TabIndex = 15;
+            this.button_wykryj_plansze.Text = "Wykryj planszę";
+            this.button_wykryj_plansze.UseVisualStyleBackColor = true;
+            this.button_wykryj_plansze.Click += new System.EventHandler(this.button_wykryj_plansze_Click);
+            // 
+            // button_sprawdź
+            // 
+            this.button_sprawdź.Location = new System.Drawing.Point(382, 179);
+            this.button_sprawdź.Name = "button_sprawdź";
+            this.button_sprawdź.Size = new System.Drawing.Size(132, 23);
+            this.button_sprawdź.TabIndex = 16;
+            this.button_sprawdź.Text = "Sprawdź plansze";
+            this.button_sprawdź.UseVisualStyleBackColor = true;
+            this.button_sprawdź.Click += new System.EventHandler(this.button_sprawdź_Click);
+            // 
             // SharpGLForm
             // 
             this.ClientSize = new System.Drawing.Size(1329, 708);
+            this.Controls.Add(this.button_sprawdź);
+            this.Controls.Add(this.button_wykryj_plansze);
+            this.Controls.Add(this.ibProcessed2);
+            this.Controls.Add(this.panel7);
+            this.Controls.Add(this.button_ruch_przeciwnika);
             this.Controls.Add(this.panel6);
             this.Controls.Add(this.panel5);
             this.Controls.Add(this.panel4);
@@ -439,14 +565,14 @@ namespace SharpGLWinformsApplication_warcaby
             this.panel5.PerformLayout();
             this.panel6.ResumeLayout(false);
             this.panel6.PerformLayout();
+            this.panel7.ResumeLayout(false);
+            this.panel7.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ibProcessed2)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
-
-
-
-        private void SharpGLForm_Load(object sender, EventArgs e)
+        private void SharpGLForm_Load(object sender, EventArgs e) //nic 
         {
             try
             {
@@ -464,15 +590,13 @@ namespace SharpGLWinformsApplication_warcaby
 
             Application.Idle += procesRamkaIAktualizacjaGUI;   // wystąienie zdarzenia - pojawienie się przedmiotu przed ramką - wywolanie funkcji  
             przechwytywanie = true;                           //sczytywanie obrazu przez kamerę i aktualizacja zmiennej flagi - przechwytujemy 
-
-
         }
 
         public void Pokaz()
         {
             try
             {
-                capWebcam = new Capture();   // przechwytywanie 
+                capWebcam = new Capture(1);   // przechwytywanie 
             }
             catch (NullReferenceException except)
             {
@@ -485,6 +609,7 @@ namespace SharpGLWinformsApplication_warcaby
             //dodajemy funkcje obrazu do listy zadań aplikacji
 
             Application.Idle += procesRamkaIAktualizacjaGUI;   // wystąienie zdarzenia - pojawienie się przedmiotu przed ramką - wywolanie funkcji  
+            //Application.Idle += proces_zielone;
             przechwytywanie = true;
         }
 
@@ -499,28 +624,122 @@ namespace SharpGLWinformsApplication_warcaby
         void procesRamkaIAktualizacjaGUI(object sender, EventArgs arg)
         {
 
-            zdjOryginalne = capWebcam.QueryFrame();  // do zdj wczytywanie obrazu przechwyconego z kamery 
+            zdjOryginalne = capWebcam.QueryFrame();  // do zdjOryginalne wczytywanie obrazu przechwyconego z kamery 
             if (zdjOryginalne == null)
                 return;
-            zdjTworzone = zdjOryginalne.InRange(new Bgr(0, 0, 175), new Bgr(100, 100, 256)); //wartość minimalna i max filtru (jeśli kolor jest większy niż lub równy tej wartości)
+            zdjTworzone = zdjOryginalne.InRange(new Bgr(0, 0, 175), new Bgr(100, 100, 256)); //wartość minimalna i max filtru (czerwony ?)
 
             // InRange sprawdza czy elementy obrazu leżą pomiędza dwoma zmiennymi skalarnymi
-            // TColor <byte> {lower hihger} - TColor byte
+            // TColor <byte> {lower higher} - TColor byte
             zdjTworzone = zdjTworzone.SmoothGaussian(9);
 
             CircleF[] circles = zdjTworzone.HoughCircles(new Gray(100), new Gray(50), 2, zdjTworzone.Height / 4, 10, 400)[0];
-            //  100 prog Canny - Canny edge detector - operator wykrywania krawędzi wykorzystujacy alg wielostopniowyw w celu wykrycia szeregu krawędzi 
-            //   zdjTworzone.Height/4 -  min odległość w pikselach między ośrodkami wykrytych kręgach
-            // min i max promień wykrytego okręgu koła się z pierwszego kanału
+            //100 = prog Canny - Canny edge detector - operator wykrywania krawędzi wykorzystujacy alg wielostopniowyw w celu wykrycia szeregu krawędzi 
+            //zdjTworzone.Height/4 =  min odległość w pikselach między ośrodkami wykrytych w okręgach
+            // min i max promień wykrytego okręgu - koła, z pierwszego kanału
             foreach (CircleF circle in circles)
             {
                 if (txtXYZPromien.Text != "")
                     txtXYZPromien.AppendText(Environment.NewLine);
-                txtXYZPromien.AppendText("Pozycja pilki : X = " + circle.Center.X.ToString().PadLeft(4) +       // x i y pozycji srodka okregu
+                txtXYZPromien.AppendText("Pozycja pilki : X = " + circle.Center.X.ToString().PadLeft(4) +       // x i y pozycja srodka okregu
                                         " , Y = " + circle.Center.Y.ToString().PadLeft(4) +
                                         " , Promien = " + circle.Radius.ToString("###.000").PadLeft(7));
 
-                txtXYZPromien.ScrollToCaret();  // przesunąć pasek przewijania w dół pola tekstowego  
+                txtXYZPromien.ScrollToCaret();// przesunąć pasek przewijania w dół pola tekstowego  
+
+                // rysowanie  małego zielonego kółka w środku wykrytego obiektu 
+                // rysowanie okręgu o promieniu 3, mimo że wielkość wykrytego koła będzie znacznie większa
+                // obiekty CvInvoke mogą zostać wykorzystane do wywołania innych funkcji OpenCV 
+                CvInvoke.cvCircle(zdjOryginalne, new Point((int)circle.Center.X, (int)circle.Center.Y), 3, new MCvScalar(0, 255, 0), -1, LINE_TYPE.CV_AA, 0);
+                //Grubość koła w pikselach, -1 wskazuje aby wypełnić koło ; AA -wygładzenie pikseli, 0 - bez przesuniecia 
+                zdjOryginalne.Draw(circle, new Bgr(Color.Red), 3); // narysowac czerwone kolo wokol wykrytego obiektu 
+            }
+            ibOriginal.Image = zdjOryginalne;
+            ibProcessed.Image = zdjTworzone;
+            ibProcessed2.Image = zdjTworzone2;
+        }
+
+        void proces_wykryj_plansze(object sender, EventArgs arg)
+        {
+
+
+            zdjOryginalne = capWebcam.QueryFrame();  // do zdjOryginalne wczytywanie obrazu przechwyconego z kamery 
+            if (zdjOryginalne == null)
+                return;
+
+             
+            zdjTworzone = zdjOryginalne.InRange(new Bgr(153, 76, 0), new Bgr(255, 153, 51)); //wartość minimalna i max filtru  -  niebieskie 
+            zdjTworzone2 = zdjOryginalne.InRange(new Bgr(0, 0, 255), new Bgr(153,153,255)); // czerwone
+            zdjTworzone3 = zdjOryginalne.InRange(new Bgr(0, 153, 76), new Bgr(178, 255, 102)); //wartość minimalna i max filtru - zielone
+            
+            // InRange sprawdza czy elementy obrazu leżą pomiędza dwoma zmiennymi skalarnymi
+            // TColor <byte> {lower higher} - TColor byte
+            zdjTworzone = zdjTworzone.SmoothGaussian(9);
+            zdjTworzone2 = zdjTworzone2.SmoothGaussian(9);
+            zdjTworzone3 = zdjTworzone3.SmoothGaussian(9);
+
+            CircleF[] circles = zdjTworzone.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0]; // n
+            CircleF[] circles2 = zdjTworzone2.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0]; // cz
+            CircleF[] circles3 = zdjTworzone3.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0]; // z
+            //CircleF[] circles = zdjTworzone.HoughCircles(new Gray(85), new Gray(40), 2, zdjTworzone.Height / 4, 10, 400)[0];
+            //100 = prog Canny - Canny edge detector - operator wykrywania krawędzi wykorzystujacy alg wielostopniowyw w celu wykrycia szeregu krawędzi 
+            //zdjTworzone.Height/4 =  min odległość w pikselach między ośrodkami wykrytych w okręgach
+            // min i max promień wykrytego okręgu - koła, z pierwszego kanału
+            foreach (CircleF circle in circles)
+            {
+                if (txtXYZPromien.Text != "")
+                    txtXYZPromien.AppendText(Environment.NewLine);
+                txtXYZPromien.AppendText("Pozycja pilki : X = " + circle.Center.X.ToString().PadLeft(4) +       // x i y pozycja srodka okregu
+                                        " , Y = " + circle.Center.Y.ToString().PadLeft(4) +
+                                        " , Promien = " + circle.Radius.ToString("###.000").PadLeft(7));
+
+                txtXYZPromien.ScrollToCaret();// przesunąć pasek przewijania w dół pola tekstowego  
+
+                raz_X = circle.Center.X;
+                raz_Y = circle.Center.Y;
+                raz_prom = circle.Radius;
+                // rysowanie  małego zielonego kółka w środku wykrytego obiektu 
+                // rysowanie okręgu o promieniu 3, mimo że wielkość wykrytego koła będzie znacznie większa
+                // obiekty CvInvoke mogą zostać wykorzystane do wywołania innych funkcji OpenCV 
+                CvInvoke.cvCircle(zdjOryginalne, new Point((int)circle.Center.X, (int)circle.Center.Y), 3, new MCvScalar(0, 255, 0), -1, LINE_TYPE.CV_AA, 0);
+                //Grubość koła w pikselach, -1 wskazuje aby wypełnić koło ; AA -wygładzenie pikseli, 0 - bez przesuniecia 
+                zdjOryginalne.Draw(circle, new Bgr(Color.Red), 3); // narysowac czerwone kolo wokol wykrytego obiektu 
+            }
+            foreach (CircleF circle in circles2)
+            {
+                if (txtXYZPromien.Text != "")
+                    txtXYZPromien.AppendText(Environment.NewLine);
+                txtXYZPromien.AppendText("Pozycja pilki : X = " + circle.Center.X.ToString().PadLeft(4) +       // x i y pozycja srodka okregu
+                                        " , Y = " + circle.Center.Y.ToString().PadLeft(4) +
+                                        " , Promien = " + circle.Radius.ToString("###.000").PadLeft(7));
+
+                txtXYZPromien.ScrollToCaret();// przesunąć pasek przewijania w dół pola tekstowego  
+
+                dwa_X = circle.Center.X;
+                dwa_Y = circle.Center.Y;
+                dwa_prom = circle.Radius;
+
+                // rysowanie  małego zielonego kółka w środku wykrytego obiektu 
+                // rysowanie okręgu o promieniu 3, mimo że wielkość wykrytego koła będzie znacznie większa
+                // obiekty CvInvoke mogą zostać wykorzystane do wywołania innych funkcji OpenCV 
+                CvInvoke.cvCircle(zdjOryginalne, new Point((int)circle.Center.X, (int)circle.Center.Y), 3, new MCvScalar(0, 255, 0), -1, LINE_TYPE.CV_AA, 0);
+                //Grubość koła w pikselach, -1 wskazuje aby wypełnić koło ; AA -wygładzenie pikseli, 0 - bez przesuniecia 
+                zdjOryginalne.Draw(circle, new Bgr(Color.Red), 3); // narysowac czerwone kolo wokol wykrytego obiektu 
+            }
+            foreach (CircleF circle in circles3)
+            {
+                if (txtXYZPromien.Text != "")
+                    txtXYZPromien.AppendText(Environment.NewLine);
+                txtXYZPromien.AppendText("Pozycja pilki : X = " + circle.Center.X.ToString().PadLeft(4) +       // x i y pozycja srodka okregu
+                                        " , Y = " + circle.Center.Y.ToString().PadLeft(4) +
+                                        " , Promien = " + circle.Radius.ToString("###.000").PadLeft(7));
+
+                txtXYZPromien.ScrollToCaret();// przesunąć pasek przewijania w dół pola tekstowego  
+
+
+               trzy_X = circle.Center.X;
+               trzy_Y = circle.Center.Y;
+               trzy_prom = circle.Radius;
 
                 // rysowanie  małego zielonego kółka w środku wykrytego obiektu 
                 // rysowanie okręgu o promieniu 3, mimo że wielkość wykrytego koła będzie znacznie większa
@@ -529,32 +748,189 @@ namespace SharpGLWinformsApplication_warcaby
                 //Grubość koła w pikselach, -1 wskazuje aby wypełnić koło ; AA -wygładzenie pikseli, 0 - bez przesuniecia 
                 zdjOryginalne.Draw(circle, new Bgr(Color.Red), 3); // narysowac czerwone kolo wokol wykrytego obiektu 
 
+                 
+            }
+
+                ibOriginal.Image = zdjOryginalne;
+                ibProcessed.Image = zdjTworzone;
+                ibProcessed2.Image = zdjTworzone2;
+
+                delay = 1;
+
+            //wyliczenie polozenia srodkow pol    
+        }
+
+        void wylicz()
+        {
+            MessageBox.Show("Sprawdzanie czy wykryto planszę");
+
+            float gorny_lewy_X = 0;
+            float gorny_lewy_Y = 0;
+
+            float dolny_lewy_X = 0;
+            float dolny_lewy_Y = 0;
+
+            float gorny_prawy_X = 0;
+            float gorny_prawy_Y = 0;
+
+            float rozmiar_pola_wys = 0;
+            float rozmiar_pola_szer = 0;
+
+            float polowa_szer_pola = 0;
+            float polowa_wys_pola = 0;
+
+            if (raz_X == 0 || dwa_X == 0 || trzy_X == 0)
+            {
+                MessageBox.Show("Nie wykryto planszy! Wybierz - wykryj plasze!");
+
+            }
+            else
+            {
+                //test 
+                dwa_X = 33;
+                dwa_Y = 9;
+                dwa_prom = 26;
+
+                raz_X = 45;
+                raz_Y = 355;
+                raz_prom = 26;
+
+                trzy_X = 383;
+                trzy_Y = 341;
+                trzy_prom = 16;
+
+                //
+                gorny_lewy_X = dwa_X + dwa_prom;
+                gorny_lewy_Y = dwa_Y + dwa_prom;
+
+                dolny_lewy_X = raz_X + raz_prom;
+                dolny_lewy_Y = raz_Y - raz_prom;
+
+                gorny_prawy_X = trzy_X - trzy_prom;
+                gorny_prawy_Y = trzy_Y + trzy_prom;
+
+                wysokosc = dolny_lewy_Y - gorny_lewy_Y;
+                szerokosc = gorny_prawy_X - gorny_lewy_X;
+
+
+                MessageBox.Show("Wykryto planszę! Można rozpocząc grę!");
+                MessageBox.Show("Wysokosc = " + wysokosc.ToString() + ". Szerokosc = " + szerokosc.ToString());
+
+
+                //rozmiar każdego pola
+                rozmiar_pola_szer = szerokosc / 8;
+                rozmiar_pola_wys = wysokosc / 8;
+
+                polowa_szer_pola = rozmiar_pola_szer / 2;
+                polowa_wys_pola = rozmiar_pola_wys / 2;
+
+                //srodki pol 
+                float[][] tablica_srodkow = new float[32][];
+                for (int i = 0; i < 32; i++)
+                {
+                    tablica_srodkow[i] = new float[2];
+                }
+
+                float x = polowa_szer_pola;
+                float y = polowa_wys_pola;
+
+                float polowa_szer_pola_ = polowa_szer_pola;
+
+                for (int i=0; i<8 ; i++)
+                {
+                    tablica_srodkow[i][0] = gorny_lewy_X + polowa_szer_pola_;
+                    tablica_srodkow[i][1] = gorny_lewy_Y + polowa_wys_pola;
+
+                    polowa_szer_pola_ += 2 * polowa_szer_pola;
+
+                     
+                    //polowa_wys_pola += polowa_wys_pola; 
+                }
+
+
+                for (int i = 0; i < 32; i++)
+                {
+                     MessageBox.Show(  "X :" + tablica_srodkow[i][0].ToString()) ;
+                    MessageBox.Show( "Y : " + tablica_srodkow[i][1].ToString());
+                     
+                } 
 
 
             }
+          
+        }
+        
+        private void button_wykryj_plansze_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                capWebcam = new Capture(1);   // przechwytywanie 
+            }
+            catch (NullReferenceException except)
+            {
+                txtXYZPromien.Text = except.Message;
 
-            ibOriginal.Image = zdjOryginalne;
-            ibProcessed.Image = zdjTworzone;
+                return;
+            }
+
+            //gdy mamy wlasciwy obiekt do przechwycenia
+            //dodajemy funkcje obrazu do listy zadań aplikacji
+
+            //Application.Idle += procesRamkaIAktualizacjaGUI;   // wystąienie zdarzenia - pojawienie się przedmiotu przed ramką - wywolanie funkcji  
+            Application.Idle += proces_wykryj_plansze;
+            przechwytywanie = true;
+
+            MessageBox.Show("Wykrywanie planszy!");
+
+            if (delay == 1)
+            {
+                if (raz_X == 0.0 || dwa_X == 0.0 || trzy_X == 0.0)
+                {
+                    MessageBox.Show("Nie wykryto planszy! Proszę poprawic połozenie planszy!");
+                    Application.Idle += proces_wykryj_plansze;
+                    przechwytywanie = true;
+                }
+                else 
+                {
+                    //Application.Idle -= proces_wykryj_plansze;
+                   // wylicz();
+                }
+            }
+            else 
+            {
+                
+
+              // MessageBox.Show("Ponowne wykrywanie planszy!");
+            }
+
+
+        }
+        private void button_sprawdź_Click(object sender, EventArgs e)
+        {
+            if (przechwytywanie == true)
+            {
+                Application.Idle -= procesRamkaIAktualizacjaGUI; // usun f.obrazu w liscie zadan aplikacji 
+                Application.Idle -= proces_wykryj_plansze;
+                przechwytywanie = false; // zmien znacznik - flage 
+                btnPausseorResume.Text = "WZNÓW";
+                wylicz();
+
+            }
+            else
+            {
+                Application.Idle += procesRamkaIAktualizacjaGUI;
+                Application.Idle += proces_wykryj_plansze;
+                przechwytywanie = true;
+            }
         }
 
-
-
-
-       /* private void button1_Click(object sender, EventArgs e)
-        {
-            this.window = new Form1();
-            window.Show();
-            window.Pokaz();
-            //window.Activate();
-
-             
-        }*/
-
+         
         private void btnPausseorResume_Click(object sender, EventArgs e)
         {
             if (przechwytywanie == true)
             {
                 Application.Idle -= procesRamkaIAktualizacjaGUI; // usun f.obrazu w liscie zadan aplikacji 
+                Application.Idle -= proces_wykryj_plansze;
                 przechwytywanie = false; // zmien znacznik - flage 
                 btnPausseorResume.Text = "WZNÓW";
 
@@ -562,30 +938,24 @@ namespace SharpGLWinformsApplication_warcaby
             else
             {
                 Application.Idle += procesRamkaIAktualizacjaGUI;
+                Application.Idle += proces_wykryj_plansze;
                 przechwytywanie = true;
             }
         }
 
+        //button "włącz"
         private void button2_Click(object sender, EventArgs e)
         {
             Pokaz();
         }
 
-
-  
-           /////////////////////////////////////////////////////////////////////////
- 
+           ///////////////////////////////////////  openGL      //////////////////////////////////  
       
-    
         
-        public bool LoadTexture(string FileName, ref uint Texture)
+        public bool LoadTexture(string FileName, ref uint Texture) //na razie nie korzystam 
         {
             OpenGL gl = openGLControl.OpenGL;
-            
-
             gl.Enable(OpenGL.GL_TEXTURE_2D);
-            //Textures.Create(gl, "szach.bmp");
-
             Bitmap image = null;
             try
             {
@@ -617,34 +987,23 @@ namespace SharpGLWinformsApplication_warcaby
             return false;
         }
 
-  
-
-        //zdefiniowanie tekstury 2D
-       // void glTexImage2D( OpenGL.enum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const OpenGL void * pixels )
-
-
-        // rys szachownicy 
+        // rysowanie szachownicy 
         private void openGLControl_OpenGLDraw(object sender, RenderEventArgs e)
         {
-            //  Get the OpenGL object.
-            //OpenGL gl = openGLControl.OpenGL;
             SharpGL.OpenGL gl = this.openGLControl.OpenGL;
-            //gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
             gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
             //  Clear the color and depth buffer.
             gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
-            
             gl.LoadIdentity();
             gl.Translate(0.0f, 0.0f, -6.0f);
             gl.Rotate(rtri, 0.0f, 1.0f, 0.0f);
 
             texture.Bind(gl);
-          
             //ok ok ok ok ok 
-            //dok 
+            //
             gl.Begin(OpenGL.GL_QUADS); // rysowanie figury (czworokątów)
             gl.Color(255.0f, 255.0f, 255.0f);
-            gl.Normal(0.0f, 1.0f, 0.0f); // Normalna wskazująca w dół
+            gl.Normal(0.0f, 1.0f, 0.0f); // Normalna wskazująca w dół (niepotrzebna ?)
             gl.TexCoord(0.0f, 1.0f);
             gl.Vertex(-4.0f, -1.0f, -4.0f);
 
@@ -658,9 +1017,6 @@ namespace SharpGLWinformsApplication_warcaby
             gl.Vertex(-4.0f, -1.0f, 4.0f);
             // Prawy dolny
             gl.End();
-
-             
-
         }
 
 
@@ -733,6 +1089,253 @@ namespace SharpGLWinformsApplication_warcaby
         {
 
         }
+
+        int flaga = 0;
+        int liczba_wykonanych_ruchow = 0;
+
+        //kalibruj
+        void kalibrowanie_planszy(object sender, EventArgs arg)
+        {
+            zdjOryginalne = capWebcam.QueryFrame();  // do zdj wczytywanie obrazu przechwyconego z kamery 
+            if (zdjOryginalne == null)
+                return;
+ 
+            szare = zdjOryginalne.Convert<Gray, Byte>();
+
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (flaga == 0)
+            {
+                label_ruch.BackColor = Color.Green;
+                label_ruch.Text = "Ruch: zielone";
+                flaga = 1;
+                liczba_wykonanych_ruchow++;
+                textBox_stan_ruchy_wykonane.Text = liczba_wykonanych_ruchow.ToString();
+
+            }
+            else if (flaga == 1)
+            {
+                label_ruch.BackColor = Color.Red;
+                label_ruch.Text = "Ruch: czerwone";
+                flaga = 0;
+                liczba_wykonanych_ruchow++;
+                textBox_stan_ruchy_wykonane.Text = liczba_wykonanych_ruchow.ToString();
+            }
+            //////// 
+    /*
+
+            try
+            {
+                capWebcam = new Capture();   // przechwytywanie 
+            }
+            catch (NullReferenceException except)
+            {
+                txtXYZPromien.Text = except.Message;
+
+                return;
+            }
+
+            //gdy mamy wlasciwy obiekt do przechwycenia
+            //dodajemy funkcje obrazu do listy zadań aplikacji
+
+            //Application.Idle += procesRamkaIAktualizacjaGUI;   // wystąienie zdarzenia - pojawienie się przedmiotu przed ramką - wywolanie funkcji  
+            przechwytywanie = true;
+            ////////
+            
+              zdjOryginalne = capWebcam.QueryFrame();  // do zdj wczytywanie obrazu przechwyconego z kamery 
+            if (zdjOryginalne == null)
+                return;
+
+            zdjTworzone = zdjOryginalne.InRange(new Bgr(4, 0, 115), new Bgr(98, 93, 255)); // czerwone - zakres sczytywania pionkow czerwonych
+            zdjTworzone2 = zdjOryginalne.InRange(new Bgr(0, 140, 21), new Bgr(113, 254, 110)); // zielone - zakres sczytywania pionkow zielonych
+
+            CircleF[] circles = zdjTworzone.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0];
+            //tutaj następuje określenie i wpisanie do tablicy miejsc występowania pionków czerwonych
+            CircleF[] circles2 = zdjTworzone2.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0];
+            //tutaj następuje określenie i wpisanie do tablicy miejsc występowania pionków zielonych
+
+            // InRange sprawdza czy elementy obrazu leżą pomiędza dwoma zmiennymi skalarnymi
+            // TColor <byte> {lower hihger} - TColor byte
+           // zdjTworzone = zdjTworzone.SmoothGaussian(9);
+
+            textBox_stan_zielone_pionki.Clear();
+            textBox_stan_czerwone_pionki.Clear();
+            polaczerwone.Clear();
+            polazielone.Clear();
+            czerwony_znacznik = 0;
+            zielony_znacznik = 0;
+            int[] t1 = new int[40];
+            int[] t2 = new int[40];
+            int[] pozycje = new int[32];
+            for (int i = 0; i <= 39; i++)
+            {
+                t2[i] = 0;
+            } //wpisanie do tablicy pionków czerwonych
+
+           
+            //////
+             
+
+            foreach (CircleF cricle in circles)
+            {
+                czerwony_znacznik++;
+                //Zczytywanie pozycji
+                for (int i = 0; i < 32; i++)
+                {
+                    
+                    if ((cricle.Center.X >= pola_final[i][2]) && (cricle.Center.X <= pola_final[i][0]) && (cricle.Center.Y >= pola_final[i][3]) && (cricle.Center.Y <= pola_final[i][1]))
+                    {
+                        polaczerwone.AppendText("Pionek nr " + czerwony_znacznik + " pole nr " + pola[i]);
+                        t2[i] = czerwony_znacznik;
+                        pozycje[i] = 2;
+                    }
+                    //else
+                    ///{
+                      //  MessageBox.Show("blad 123");
+                    //}
+                }
+                polaczerwone.AppendText(Environment.NewLine);
+                MCvFont f = new MCvFont(FONT.CV_FONT_HERSHEY_COMPLEX, 0.6, 0.6);
+                zdjOryginalne.Draw(czerwony_znacznik.ToString(), ref f, new Point((int)cricle.Center.X - 6, (int)cricle.Center.Y), new Bgr(0, 255, 246));
+                zdjOryginalne.Draw(cricle, new Bgr(Color.Red), 3); //rysowanie na obrazku pionków czerwonych
+            }
+            ruchy.AppendText("\n");
+            textBox_stan_czerwone_pionki.AppendText(czerwony_znacznik.ToString());
+            for (int i = 0; i <= 39; i++)
+            {
+                t1[i] = 0;
+            } //wpisanie do tablicy pionków zielonych
+            foreach (CircleF cricle2 in circles2)
+            {
+                zielony_znacznik++;
+            //Zczytywanie pozycjicricle
+            for (int i = 0; i <= 31; i++)
+            {
+
+                int [][] pola_final = new int [32][];
+                 if ((cricle2.Center.X >= pola_final[i][2]) && (cricle2.Center.X <= pola_final[i][0]) && (cricle2.Center.Y >= pola_final[i][3]) && (cricle2.Center.Y <= pola_final[i][1]))
+                 {
+                    polazielone.AppendText("Pionek nr " + zielony_znacznik + " pole nr " + pola[i]);
+                    t1[i] = zielony_znacznik;
+                    pozycje[i] = 1;
+                 }  
+             }
+                 polazielone.AppendText(Environment.NewLine);
+                MCvFont f = new MCvFont(FONT.CV_FONT_HERSHEY_COMPLEX, 0.6, 0.6);
+               zdjOryginalne.Draw(zielony_znacznik.ToString(), ref f, new Point((int)cricle2.Center.X - 6, (int)cricle2.Center.Y), new Bgr(0, 255, 246));
+               zdjOryginalne.Draw(cricle2,
+                new Bgr(Color.Green),
+                   3);
+            }
+
+            textBox_stan_zielone_pionki.AppendText(zielony_znacznik.ToString());
+            for (int i = 0; i < 32; i++)
+            {
+                srodki_pol[i] = new double[2];
+            }
+            int kroki = 0;
+            double x = 82.5, y = 82.5;
+            for (int i = 0; i < 32; i++)
+            {
+                if ((i % 4 == 0) && (i != 0))
+                {
+                    kroki++;
+                    y += 54.5;
+                    if (kroki == 0) { x = 82.5; }
+                    else { x = 135.5; }
+                }
+                srodki_pol[i][0] = x;
+                srodki_pol[i][1] = y;
+                x += 106;
+            }
+            ruchy.Clear();
+            bicia.Clear();
+            int ile_ruchy = 0;
+            int ile_bicia = 0;
+            //13 str
+            //możliwe ruchy dla pionkow zielonych
+    if (ktory_obrot == 2)
+    {
+        for (int i = 31; i > 3; i--)
+        {
+            //proste ruchy bez bicia
+            //z prawych pól do przodu
+            if ((i % 8 == 3) && (t1[i] != 0) && (pozycje[i - 4] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 4] + "\n"); ile_ruchy++; }
+            //z lewych pól do przodu
+            if ((i % 8 == 4) && (t1[i] != 0) && (pozycje[i - 4] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 4] + "\n"); ile_ruchy++; }
+            //pierwsza linia do przodu w prawo
+            if ((i % 8 < 3) && (t1[i] != 0) && (pozycje[i - 3] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 3] + "\n"); ile_ruchy++; }
+            //pierwsza linia do przodu w lewo
+            if ((i % 8 < 3) && (t1[i] != 0) && (pozycje[i - 4] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 4] + "\n"); ile_ruchy++; }
+                //druga linia do przodu w prawo
+            if ((i % 8 > 4) && (i % 8 <= 7) && (t1[i] != 0) && (pozycje[i - 4] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 4] + "\n"); ile_ruchy++; }
+            //druga linia do przodu w lewo
+            if ((i % 8 > 4) && (i % 8 <= 7) && (t1[i] != 0) && (pozycje[i - 5] == 0)) { ruchy.AppendText("Pionek nr " + t1[i] + " na pole " + pola[i - 5] + "\n"); ile_ruchy++; }
+            if (i > 7)
+            {
+                //bicia
+                //z prawych pól do przodu
+                if ((i % 8 == 3) && (t1[i] != 0) && (t2[i - 4] != 0) && (pozycje[i - 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 9] + "\n"); ile_bicia++; }
+                //z lewych pól do przodu
+                if ((i % 8 == 4) && (t1[i] != 0) && (t2[i - 4] != 0) && (pozycje[i - 3] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 7] + "\n"); ile_bicia++; }
+                //pierwsza linia do przodu w prawo
+                if ((i % 8 < 3) && (t1[i] != 0) && (t2[i - 3] != 0) && (pozycje[i - 7] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 7] + "\n"); ile_bicia++; }
+                //pierwsza linia do przodu w lewo
+                if ((i % 8 < 3) && (t1[i] != 0) && (t2[i - 4] != 0) && (pozycje[i - 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 9] + "\n"); ile_bicia++; }
+                //druga linia do przodu w prawo
+                if ((i % 8 > 4) && (i % 8 <= 7) && (t1[i] != 0) && (t2[i - 4] != 0) && (pozycje[i - 7] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 7] + "\n"); ile_bicia++; }
+                        //druga linia do przodu w lewo
+                if ((i % 8 > 4) && (i % 8 <= 7) && (t1[i] != 0) && (t2[i - 5] != 0) && (pozycje[i - 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t1[i] + " na pole " + pola[i - 9] + "\n"); ile_bicia++; }
+            }
+           }
+        }
+        if (ktory_obrot == 1)
+        {
+        //ruchy dla pionkow czerwonych
+            for (int i = 0; i < 28; i++)
+            {
+                //proste ruchy bez bicia
+                //z prawych pól do przodu
+                if ((i % 8 == 3) && (t2[i] != 0) && (pozycje[i + 4] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 4] + "\n"); ile_ruchy++; }
+                //z lewych pól do przodu
+                if ((i % 8 == 4) && (t2[i] != 0) && (pozycje[i + 4] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 4] + "\n"); ile_ruchy++; }
+                //pierwsza linia do przodu w prawo
+                if ((i % 8 < 3) && (t2[i] != 0) && (pozycje[i + 5] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 5] + "\n"); ile_ruchy++; }
+                //pierwsza linia do przodu w lewo
+                if ((i % 8 < 3) && (t2[i] != 0) && (pozycje[i + 4] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 4] + "\n"); ile_ruchy++; }
+                    //druga linia do przodu w prawo
+                if ((i % 8 > 4) && (i % 8 <= 7) && (t2[i] != 0) && (pozycje[i + 4] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 4] + "\n"); ile_ruchy++; }
+                //druga linia do przodu w lewo
+                if ((i % 8 > 4) && (i % 8 <= 7) && (t2[i] != 0) && (pozycje[i + 3] == 0)) { ruchy.AppendText("Pionek nr " + t2[i] + " na pole " + pola[i + 3] + "\n"); ile_ruchy++; }
+                if (i < 24)
+                {
+                    //bicia
+                    //z prawych pól do przodu
+                    if ((i % 8 == 3) && (t2[i] != 0) && (t1[i + 4] != 0) && (pozycje[i + 7] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 7] + "\n"); ile_bicia++; }
+                    //z lewych pól do przodu
+                    if ((i % 8 == 4) && (t2[i] != 0) && (t1[i + 4] != 0) && (pozycje[i + 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 9] + "\n"); ile_bicia++; }
+                    //pierwsza linia do przodu w prawo
+                    if ((i % 8 < 3) && (t2[i] != 0) && (t1[i + 4] != 0) && (pozycje[i + 7] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 7] + "\n"); ile_bicia++; }
+                    //pierwsza linia do przodu w lewo
+                    if ((i % 8 < 3) && (t2[i] != 0) && (t1[i + 5] != 0) && (pozycje[i + 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 9] + "\n"); ile_bicia++; }
+                            //druga linia do przodu w prawo
+                    if ((i % 8 > 4) && (i % 8 <= 7) && (t2[i] != 0) && (t1[i + 3] != 0) && (pozycje[i + 7] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 7] + "\n"); ile_bicia++; }
+                    //druga linia do przodu w lewo
+                    if ((i % 8 > 4) && (i % 8 <= 7) && (t2[i] != 0) && (t1[i + 4] != 0) && (pozycje[i + 9] == 0)) { bicia.AppendText("Bicie pionkiem nr " + t2[i] + " na pole " + pola[i + 9] + "\n"); ile_bicia++; }
+                }
+            }
+        }*/
+            
+      }
+
+
+
+
+
+
         
         
     }
