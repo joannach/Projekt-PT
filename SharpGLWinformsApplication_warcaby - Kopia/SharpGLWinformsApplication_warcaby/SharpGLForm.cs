@@ -8,8 +8,8 @@ using System.Text;
 using System.Windows.Forms;
 using SharpGL;
 //using OpenGL;
- 
 
+ 
 
 //
 using Emgu.CV;
@@ -24,6 +24,7 @@ using System.ComponentModel;
 using SharpGL.SceneGraph.Core;
 using SharpGL.SceneGraph.Assets;
 using System.Runtime.InteropServices;
+using System.Threading;
 //
  
 
@@ -51,11 +52,41 @@ namespace SharpGLWinformsApplication_warcaby
         int czerwony_znacznik = 0;
         int zielony_znacznik = 0;
         int[][] pola_final = new int[32][];
-        string[] pola = new string[40];
+        //string[] pola = new string[40];
         double[][] srodki_pol = new double[32][];
+        Pole[,] pola = new Pole[8, 8];
 
         int ktory_obrot = 2;
+        //public event MouseEventHandler MouseMove_;
+        //public event MouseEventHandler MouseMove;
+        //pionki
+        float zielony_X = 0;
+        float zielony_Y = 0;
+        float zielony_prom = 0;
 
+        float czerwony_X = 0;
+        float czerwony_Y = 0;
+        float czerwony_prom = 0;
+        //
+
+        //do wylicz() - macierz pola
+        float gorny_lewy_X = 0;
+        float gorny_lewy_Y = 0;
+
+        float dolny_lewy_X = 0;
+        float dolny_lewy_Y = 0;
+
+        float gorny_prawy_X = 0;
+        float gorny_prawy_Y = 0;
+
+        float rozmiar_pola_wys = 0;
+        float rozmiar_pola_szer = 0;
+
+        float polowa_szer_pola = 0;
+        float polowa_wys_pola = 0;
+
+
+        bool cos = true;
         //koordynaty 
 
         float raz_X = 0;
@@ -82,6 +113,7 @@ namespace SharpGLWinformsApplication_warcaby
 
         //Textures_ texture = new Textures_();
         Texture texture = new Texture();
+        Texture texture_p = new Texture();
 
         string[] file = {
         @"Data\szach.bmp"
@@ -99,8 +131,9 @@ namespace SharpGLWinformsApplication_warcaby
             InitializeComponent();            
             SharpGL.OpenGL gl = this.openGLControl.OpenGL;
             gl.Enable(OpenGL.GL_TEXTURE_2D);
-            texture.Create(gl, "C://Users/dom/Desktop/szach.bmp");   // lub szachownica.bmp (8x8)
+            texture.Create(gl, "C://Users/dom/Desktop/01_szachownica.bmp");   // lub szachownica.bmp (8x8)
 
+            texture_p.Create(gl, "C://Users/dom/Desktop/pionek.bmp");
 
             textBox_stan_zielone_pionki.Text = "0";
             textBox_stan_czerwone_pionki.Text = "0";
@@ -113,8 +146,42 @@ namespace SharpGLWinformsApplication_warcaby
             polazielone.AppendText("brak\n");
             label_ruch.Text = "Ruch: zielone";
             label_ruch.BackColor = Color.Green;
+
+            
+            //richTextBox_mysz.Text = MousePosition.X.ToString();
+           // richTextBox_mysz.AppendText("X: " + MousePosition.X.ToString() + " Y:" + MousePosition.Y.ToString());
+            //MouseMove += new MouseEventHandler(window_MouseMove);
+           // this.MouseMove += new MouseEventHandler(window_MouseMove);
+           // this.MouseMove_ += new MouseEventHandler(SharpGLForm_MouseMove);
+           //// this.MouseMove_ += SharpGLForm_MouseMove_;
+          //  MouseMove += new MouseEventHandler(SharpGLForm_MouseMove);
+
+
+           // MouseClick += SharpGLForm_MouseClick;
+           // MouseClick += new MouseEventHandler(SharpGLForm_MouseMove);
         }
 
+       /* void SharpGLForm_MouseClick(object sender, MouseEventArgs e)
+        {
+            throw new NotImplementedException();
+            richTextBox_mysz.AppendText(e.Y.ToString());
+            richTextBox_mysz.AppendText(MousePosition.X.ToString());
+        }*/
+
+        /*void SharpGLForm_MouseMove(object sender, MouseEventArgs e)
+        {
+            //throw new NotImplementedException();
+            richTextBox_mysz.AppendText(e.Y.ToString());
+            richTextBox_mysz.AppendText(MousePosition.X.ToString());
+        }
+
+        void SharpGLForm_MouseMove_(object sender, MouseEventArgs e)
+        {
+            //throw new NotImplementedException();
+            richTextBox_mysz.AppendText(e.Y.ToString());
+        }
+        */
+        
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
@@ -157,6 +224,7 @@ namespace SharpGLWinformsApplication_warcaby
             this.button_wykryj_plansze = new System.Windows.Forms.Button();
             this.button_sprawdź = new System.Windows.Forms.Button();
             this.richTextBox_pola = new System.Windows.Forms.RichTextBox();
+            this.button_pionki = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.ibOriginal)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ibProcessed)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.openGLControl)).BeginInit();
@@ -539,9 +607,20 @@ namespace SharpGLWinformsApplication_warcaby
             this.richTextBox_pola.TabStop = false;
             this.richTextBox_pola.Text = "";
             // 
+            // button_pionki
+            // 
+            this.button_pionki.Location = new System.Drawing.Point(419, 209);
+            this.button_pionki.Name = "button_pionki";
+            this.button_pionki.Size = new System.Drawing.Size(93, 23);
+            this.button_pionki.TabIndex = 18;
+            this.button_pionki.Text = "Wykryj pionki";
+            this.button_pionki.UseVisualStyleBackColor = true;
+            this.button_pionki.Click += new System.EventHandler(this.button_pionki_Click);
+            // 
             // SharpGLForm
             // 
             this.ClientSize = new System.Drawing.Size(1329, 708);
+            this.Controls.Add(this.button_pionki);
             this.Controls.Add(this.richTextBox_pola);
             this.Controls.Add(this.button_sprawdź);
             this.Controls.Add(this.button_wykryj_plansze);
@@ -583,7 +662,7 @@ namespace SharpGLWinformsApplication_warcaby
             this.PerformLayout();
 
         }
-        private void SharpGLForm_Load(object sender, EventArgs e) //nic 
+        /*private void SharpGLForm_Load(object sender, EventArgs e) //nic 
         {
             try
             {
@@ -592,7 +671,7 @@ namespace SharpGLWinformsApplication_warcaby
             catch (NullReferenceException except)
             {
                 txtXYZPromien.Text = except.Message;
-
+        
                 return;
             }
 
@@ -601,7 +680,7 @@ namespace SharpGLWinformsApplication_warcaby
 
             Application.Idle += procesRamkaIAktualizacjaGUI;   // wystąienie zdarzenia - pojawienie się przedmiotu przed ramką - wywolanie funkcji  
             przechwytywanie = true;                           //sczytywanie obrazu przez kamerę i aktualizacja zmiennej flagi - przechwytujemy 
-        }
+        }*/
 
         public void Pokaz()
         {
@@ -664,15 +743,20 @@ namespace SharpGLWinformsApplication_warcaby
                 CvInvoke.cvCircle(zdjOryginalne, new Point((int)circle.Center.X, (int)circle.Center.Y), 3, new MCvScalar(0, 255, 0), -1, LINE_TYPE.CV_AA, 0);
                 //Grubość koła w pikselach, -1 wskazuje aby wypełnić koło ; AA -wygładzenie pikseli, 0 - bez przesuniecia 
                 zdjOryginalne.Draw(circle, new Bgr(Color.Red), 3); // narysowac czerwone kolo wokol wykrytego obiektu 
+
+
+                //rysowanie pionkow na planszy wirtualnej 
+
             }
             ibOriginal.Image = zdjOryginalne;
             ibProcessed.Image = zdjTworzone;
             ibProcessed2.Image = zdjTworzone2;
         }
 
+    
         void proces_wykryj_plansze(object sender, EventArgs arg)
         {
-
+            //wykrywanie koordynatow w rogach planszy, wyliczenie srodkow kazdego pola (X, Y)
 
             zdjOryginalne = capWebcam.QueryFrame();  // do zdjOryginalne wczytywanie obrazu przechwyconego z kamery 
             if (zdjOryginalne == null)
@@ -768,27 +852,17 @@ namespace SharpGLWinformsApplication_warcaby
 
                 delay = 1;
 
-            //wyliczenie polozenia srodkow pol    
+            //wyliczenie polozenia srodkow pol    - wylicz()
+
+
+
         }
 
         void wylicz()
         {
+            // wyliczenie srodkow pol szachownicy 
+
             MessageBox.Show("Sprawdzanie czy wykryto planszę");
-
-            float gorny_lewy_X = 0;
-            float gorny_lewy_Y = 0;
-
-            float dolny_lewy_X = 0;
-            float dolny_lewy_Y = 0;
-
-            float gorny_prawy_X = 0;
-            float gorny_prawy_Y = 0;
-
-            float rozmiar_pola_wys = 0;
-            float rozmiar_pola_szer = 0;
-
-            float polowa_szer_pola = 0;
-            float polowa_wys_pola = 0;
 
             if (raz_X == 0 || dwa_X == 0 || trzy_X == 0)
             {
@@ -844,7 +918,6 @@ namespace SharpGLWinformsApplication_warcaby
                int nazwa_int = 1;
                
                 //srodki pol 
-                Pole[,] pola = new Pole[8,8];
                 for (int i = 0; i < 8; i++)
                 {
                     //float nowa_polowa = polowa_szer_pola; 
@@ -855,6 +928,7 @@ namespace SharpGLWinformsApplication_warcaby
                         {
                             pola[i,j].X = polowa_szer_pola;
                             pola[i, j].nazwa += nazwa;
+                            
 
                         }
                         else
@@ -896,9 +970,6 @@ namespace SharpGLWinformsApplication_warcaby
 
                   
                 }
-
-        
-
 
                 for (int i = 0; i < 8; i++)
                 {
@@ -969,7 +1040,7 @@ namespace SharpGLWinformsApplication_warcaby
                 Application.Idle -= procesRamkaIAktualizacjaGUI; // usun f.obrazu w liscie zadan aplikacji 
                 Application.Idle -= proces_wykryj_plansze;
                 przechwytywanie = false; // zmien znacznik - flage 
-                btnPausseorResume.Text = "WZNÓW";
+                //btnPausseorResume.Text = "WZNÓW";
                 wylicz();
 
             }
@@ -1007,57 +1078,130 @@ namespace SharpGLWinformsApplication_warcaby
         }
 
            ///////////////////////////////////////  openGL      //////////////////////////////////  
-      
-        
-        public bool LoadTexture(string FileName, ref uint Texture) //na razie nie korzystam 
+
+        private void window_MouseMove(object sender, MouseEventArgs e)
         {
-            OpenGL gl = openGLControl.OpenGL;
-            gl.Enable(OpenGL.GL_TEXTURE_2D);
-            Bitmap image = null;
-            try
+             
+                //richTextBox_mysz.AppendText("X: " + e.X.ToString() + " Y:" + e.Y.ToString());
+            
+
+               /* if (e.Y == 0)
             {
-                image = new Bitmap(FileName);
+                panel1.Visible = true;
             }
-            catch (System.ArgumentException)
+            if (e.Y > 229)
             {
-                MessageBox.Show("Could not load " + FileName + ". Please make sure that Data is a subfolder from where the application is running.",
-                "Error", MessageBoxButtons.OK);
-                return false;
-            }
-            if (image != null)
-            {
-                image.RotateFlip(RotateFlipType.RotateNoneFlipY);
-                System.Drawing.Imaging.BitmapData bitmapdata;
-                Rectangle rect = new Rectangle(0, 0, image.Width, image.Height);
-                bitmapdata = image.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-                uint[] t = new uint[1];
-                gl.GenTextures(1, t);
-                Texture = t[0];
-                gl.BindTexture(OpenGL.GL_TEXTURE_2D, Texture);
-                gl.TexParameter(OpenGL.GL_TEXTURE_2D, OpenGL.GL_TEXTURE_MAG_FILTER, OpenGL.GL_LINEAR);  
-                gl.TexParameter(OpenGL.GL_TEXTURE_2D, OpenGL.GL_TEXTURE_MIN_FILTER, OpenGL.GL_LINEAR_MIPMAP_NEAREST);
-                gl.Build2DMipmaps(OpenGL.GL_TEXTURE_2D, (int)OpenGL.GL_RGB, image.Width, image.Height, OpenGL.GL_BGR_EXT, OpenGL.GL_UNSIGNED_BYTE, bitmapdata.Scan0);
-                image.UnlockBits(bitmapdata);
-                image.Dispose();
-                return true;
-            }
-            return false;
-        }
+                panel1.Visible = false;
+            }*/
+         }
+        
+         
 
         // rysowanie szachownicy 
         private void openGLControl_OpenGLDraw(object sender, RenderEventArgs e)
         {
             SharpGL.OpenGL gl = this.openGLControl.OpenGL;
+
+
+            /*
+            //SharpGL.OpenGL gl = this.openGLControl.OpenGL;
             gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
             //  Clear the color and depth buffer.
             gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
             gl.LoadIdentity();
+            var quadratic = gl.NewQuadric();
+            gl.Color(255.0f, 255.0f, 0);
+            gl.PushMatrix();
+            //texture_p.Bind(gl);
+            gl.Translate(-1f, 1.7f, -3.2f);
+            gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+            gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+            gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+            gl.PopMatrix();
+
+            */
+
+           
+            //MessageBox.Show("zielone");
+
+
+            gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
+            //  Clear the color and depth buffer.
+            gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
+
+            
+            
+             /*
+             //gorny lewy
+           var quadratic = gl.NewQuadric();
+            gl.Color(255.0f, 0, 0);
+            gl.PushMatrix();
+            //texture_p.Bind(gl);
+            gl.Translate(2.3f, 1.7f, 0.86f);
+            gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+            gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+            gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+            gl.PopMatrix();*/
+
+            
+
+
+            
+            if (pola[0,0] != null)
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    for (int j = 0; j < 8; j++)
+                    {
+                        if (pola[i, j].zielony == true)
+                        {
+                            var quadratic = gl.NewQuadric();
+                            gl.Color(255.0f, 255.0f, 0);
+                            gl.PushMatrix();
+                            //texture_p.Bind(gl);
+                            gl.Translate(2.3f +(polowa_szer_pola*(i+1)), 1.7f, -3.2f);
+                            gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                            gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                            gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+
+                            Thread.SpinWait(10);
+                           // gl.PopMatrix();
+
+                        }
+                    }
+                }
+            }
+
+            /*
+           if (czerwony_X != 0)
+            {
+                var quadratic = gl.NewQuadric();
+               // var quadratic = gl.NewQuadric();
+                gl.Color(255.0f, 0, 0);
+                gl.PushMatrix();
+                //texture_p.Bind(gl);
+                gl.Translate(-1f, 1.7f, -3.2f);
+                gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+                gl.PopMatrix();
+
+            }*/
+            gl.LoadIdentity();
             gl.Translate(0.0f, 0.0f, -6.0f);
             gl.Rotate(rtri, 0.0f, 1.0f, 0.0f);
 
+
+       
+
+
+
             texture.Bind(gl);
-            //ok ok ok ok ok 
-            //
+            //texture_p.Bind(gl);            
+
+
+                //jest ok 
+
             gl.Begin(OpenGL.GL_QUADS); // rysowanie figury (czworokątów)
             gl.Color(255.0f, 255.0f, 255.0f);
             gl.Normal(0.0f, 1.0f, 0.0f); // Normalna wskazująca w dół (niepotrzebna ?)
@@ -1074,6 +1218,62 @@ namespace SharpGLWinformsApplication_warcaby
             gl.Vertex(-4.0f, -1.0f, 4.0f);
             // Prawy dolny
             gl.End();
+
+             
+            
+            /*
+            if (czerwony_X == 0 || czerwony_Y == 0)
+            {
+
+                //MessageBox.Show("Nie wykryto czerwonych pionkow na planszy");
+
+            }
+            else
+            {
+                 
+
+
+                if (pola != null)
+                {
+                    for (int i = 0; i < pola.Length; i++)
+                    {
+                     for (int j = 0; j < pola.Length; j++)
+                     {
+
+                    if (((float)czerwony_X - pola[i, j].X) <= polowa_szer_pola && ((float)czerwony_Y - pola[i, j].Y) <= polowa_wys_pola)
+                    {
+                    //SharpGL.OpenGL gl = this.openGLControl.OpenGL;
+                    gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
+                    //  Clear the color and depth buffer.
+                    gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
+                    gl.LoadIdentity();
+                    var quadratic = gl.NewQuadric();
+                    gl.Color(255.0f, 255.0f, 0);
+                    gl.PushMatrix();
+                    //texture_p.Bind(gl);
+                    gl.Translate(-1f, 1.7f, -3.2f);
+                    gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                    gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                    gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+                    gl.PopMatrix();
+
+                    MessageBox.Show("czerwony narys.");
+                     }
+                      }
+                    }
+                }
+            }*/
+
+            //OpenGL gl = openGLControl.OpenGL;
+           // SharpGL.OpenGL g = this.openGLControl.OpenGL;
+
+
+        //   proces_rysuj_pionki();
+
+           // this.Refresh();
+          // DrawPawn(czerwony_X, czerwony_Y, (int)texture_p.ToBitmap());
+
+            
         }
 
 
@@ -1092,6 +1292,8 @@ namespace SharpGLWinformsApplication_warcaby
 
             //  Set the clear color.
             gl.ClearColor(0, 0, 0, 0);
+
+            
             
         }
 
@@ -1150,17 +1352,7 @@ namespace SharpGLWinformsApplication_warcaby
         int flaga = 0;
         int liczba_wykonanych_ruchow = 0;
 
-        //kalibruj
-        void kalibrowanie_planszy(object sender, EventArgs arg)
-        {
-            zdjOryginalne = capWebcam.QueryFrame();  // do zdj wczytywanie obrazu przechwyconego z kamery 
-            if (zdjOryginalne == null)
-                return;
- 
-            szare = zdjOryginalne.Convert<Gray, Byte>();
-
-
-        }
+     
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -1186,12 +1378,366 @@ namespace SharpGLWinformsApplication_warcaby
             
       }
 
+        void proces_rysuj_pionki()
+        {
+            
+            SharpGL.OpenGL gl = this.openGLControl.OpenGL; 
+            zdjOryginalne = capWebcam.QueryFrame();  // do zdjOryginalne wczytywanie obrazu przechwyconego z kamery 
+            if (zdjOryginalne == null)
+                return;
+
+
+            //zdjTworzone = zdjOryginalne.InRange(new Bgr(153, 76, 0), new Bgr(255, 153, 51)); //wartość minimalna i max filtru  -  niebieskie 
+            zdjTworzone2 = zdjOryginalne.InRange(new Bgr(0, 0, 255), new Bgr(153, 153, 255)); // czerwone
+            zdjTworzone = zdjOryginalne.InRange(new Bgr(0, 153, 76), new Bgr(178, 255, 102)); //wartość minimalna i max filtru - zielone
+
+            // InRange sprawdza czy elementy obrazu leżą pomiędza dwoma zmiennymi skalarnymi
+            // TColor <byte> {lower higher} - TColor byte
+            zdjTworzone = zdjTworzone.SmoothGaussian(9);
+            zdjTworzone2 = zdjTworzone2.SmoothGaussian(9);
+
+
+            CircleF[] circles = zdjTworzone.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0]; // z
+            CircleF[] circles2 = zdjTworzone2.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0]; // cz
+            //CircleF[] circles3 = zdjTworzone3.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0]; // 
+            //CircleF[] circles = zdjTworzone.HoughCircles(new Gray(85), new Gray(40), 2, zdjTworzone.Height / 4, 10, 400)[0];
+            //100 = prog Canny - Canny edge detector - operator wykrywania krawędzi wykorzystujacy alg wielostopniowyw w celu wykrycia szeregu krawędzi 
+            //zdjTworzone.Height/4 =  min odległość w pikselach między ośrodkami wykrytych w okręgach
+            // min i max promień wykrytego okręgu - koła, z pierwszego kanału
+            foreach (CircleF circle in circles) //zielone
+            {
+                if (txtXYZPromien.Text != "")
+                    txtXYZPromien.AppendText(Environment.NewLine);
+                txtXYZPromien.AppendText("Pozycja pilki : X = " + circle.Center.X.ToString().PadLeft(4) +       // x i y pozycja srodka okregu
+                                        " , Y = " + circle.Center.Y.ToString().PadLeft(4) +
+                                        " , Promien = " + circle.Radius.ToString("###.000").PadLeft(7));
+
+                txtXYZPromien.ScrollToCaret();// przesunąć pasek przewijania w dół pola tekstowego  
+
+                zielony_X = circle.Center.X;
+                zielony_Y = circle.Center.Y;
+                zielony_prom = circle.Radius;
+                // rysowanie  małego zielonego kółka w środku wykrytego obiektu 
+                // rysowanie okręgu o promieniu 3, mimo że wielkość wykrytego koła będzie znacznie większa
+                // obiekty CvInvoke mogą zostać wykorzystane do wywołania innych funkcji OpenCV 
+                CvInvoke.cvCircle(zdjOryginalne, new Point((int)circle.Center.X, (int)circle.Center.Y), 3, new MCvScalar(0, 255, 0), -1, LINE_TYPE.CV_AA, 0);
+                //Grubość koła w pikselach, -1 wskazuje aby wypełnić koło ; AA -wygładzenie pikseli, 0 - bez przesuniecia 
+                zdjOryginalne.Draw(circle, new Bgr(Color.Red), 3); // narysowac czerwone kolo wokol wykrytego obiektu 
+
+                if (pola != null)
+                {
+                    for (int i = 0; i < pola.Length; i++)
+                    {
+                        for (int j = 0; j < pola.Length; j++)
+                        {
+                            if (((float)circle.Center.X - pola[i, j].X) <= polowa_szer_pola && ((float)circle.Center.Y - pola[i, j].Y) <= polowa_wys_pola)
+                            {
+                                //SharpGL.OpenGL gl = this.openGLControl.OpenGL;
+                                gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
+                                //  Clear the color and depth buffer.
+                                gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
+                                gl.LoadIdentity();
+                                var quadratic = gl.NewQuadric();
+                                gl.Color(255.0f, 255.0f, 0);
+                                gl.PushMatrix();
+                                //texture_p.Bind(gl);
+                                gl.Translate(-1f, 1.7f, -3.2f);
+                                gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                                gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                                gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+                                gl.PopMatrix();
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            foreach (CircleF circle in circles2)
+            {
+                if (txtXYZPromien.Text != "")
+                    txtXYZPromien.AppendText(Environment.NewLine);
+                txtXYZPromien.AppendText("Pozycja pilki : X = " + circle.Center.X.ToString().PadLeft(4) +       // x i y pozycja srodka okregu
+                                        " , Y = " + circle.Center.Y.ToString().PadLeft(4) +
+                                        " , Promien = " + circle.Radius.ToString("###.000").PadLeft(7));
+
+                txtXYZPromien.ScrollToCaret();// przesunąć pasek przewijania w dół pola tekstowego  
+
+                czerwony_X = circle.Center.X;
+                czerwony_Y = circle.Center.Y;
+                czerwony_prom = circle.Radius;
+
+                // rysowanie  małego zielonego kółka w środku wykrytego obiektu 
+                // rysowanie okręgu o promieniu 3, mimo że wielkość wykrytego koła będzie znacznie większa
+                // obiekty CvInvoke mogą zostać wykorzystane do wywołania innych funkcji OpenCV 
+                CvInvoke.cvCircle(zdjOryginalne, new Point((int)circle.Center.X, (int)circle.Center.Y), 3, new MCvScalar(0, 255, 0), -1, LINE_TYPE.CV_AA, 0);
+                //Grubość koła w pikselach, -1 wskazuje aby wypełnić koło ; AA -wygładzenie pikseli, 0 - bez przesuniecia 
+                zdjOryginalne.Draw(circle, new Bgr(Color.Red), 3); // narysowac czerwone kolo wokol wykrytego obiektu 
+            }
+            ibOriginal.Image = zdjOryginalne;
+            ibProcessed.Image = zdjTworzone;
+            ibProcessed2.Image = zdjTworzone2;
+
+        }
 
 
 
+        void proces_rysuj_pionki_nowa()
+        {
+            MessageBox.Show("Rysuje pionki");
 
+
+            if (czerwony_X == 0 || czerwony_Y == 0)
+            {
+
+                MessageBox.Show("Nie wykryto czerwonych pionkow na planszy");
+                
+            }
+            else
+            {
+                SharpGL.OpenGL gl = this.openGLControl.OpenGL;
+
+
+                if (pola != null)
+                {
+                   // for (int i = 0; i < pola.Length; i++)
+                   // {
+                     //   for (int j = 0; j < pola.Length; j++)
+                     //   {
+
+                            //if (((float)czerwony_X - pola[i, j].X) <= polowa_szer_pola && ((float)czerwony_Y - pola[i, j].Y) <= polowa_wys_pola)
+                           // {
+                                //SharpGL.OpenGL gl = this.openGLControl.OpenGL;
+                                gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
+                                //  Clear the color and depth buffer.
+                                gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
+                                gl.LoadIdentity();
+                                var quadratic = gl.NewQuadric();
+                                gl.Color(255.0f, 255.0f, 0);
+                                gl.PushMatrix();
+                                //texture_p.Bind(gl);
+                                gl.Translate(-1f, 1.7f, -3.2f);
+                                gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                                gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                                gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+                                gl.PopMatrix();
+
+                                MessageBox.Show("czerwony narys.");
+                            //}
+                      //  }
+                   // }
+                }
+            }
+           }
+
+
+             
 
         
+
+
+        void proces_wykryj_pionki(object sender, EventArgs arg)
+        {
+
+
+            SharpGL.OpenGL gl = this.openGLControl.OpenGL; 
+            //wykrywanie pionkow niebieskich i czerownych 2
+ 
+
+            zdjOryginalne = capWebcam.QueryFrame();  // do zdjOryginalne wczytywanie obrazu przechwyconego z kamery 
+            if (zdjOryginalne == null)
+                return;
+
+
+            //zdjTworzone = zdjOryginalne.InRange(new Bgr(153, 76, 0), new Bgr(255, 153, 51)); //wartość minimalna i max filtru  -  niebieskie 
+            zdjTworzone2 = zdjOryginalne.InRange(new Bgr(0, 0, 255), new Bgr(153, 153, 255)); // czerwone
+            zdjTworzone = zdjOryginalne.InRange(new Bgr(0, 153, 76), new Bgr(178, 255, 102)); //wartość minimalna i max filtru - zielone
+
+            // InRange sprawdza czy elementy obrazu leżą pomiędza dwoma zmiennymi skalarnymi
+            // TColor <byte> {lower higher} - TColor byte
+            zdjTworzone = zdjTworzone.SmoothGaussian(9);
+            zdjTworzone2 = zdjTworzone2.SmoothGaussian(9);
+
+
+            CircleF[] circles = zdjTworzone.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0]; // z
+            CircleF[] circles2 = zdjTworzone2.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0]; // cz
+            //CircleF[] circles3 = zdjTworzone3.HoughCircles(new Gray(85), new Gray(40), 2, 30, 1, 30)[0]; // 
+            //CircleF[] circles = zdjTworzone.HoughCircles(new Gray(85), new Gray(40), 2, zdjTworzone.Height / 4, 10, 400)[0];
+            //100 = prog Canny - Canny edge detector - operator wykrywania krawędzi wykorzystujacy alg wielostopniowyw w celu wykrycia szeregu krawędzi 
+            //zdjTworzone.Height/4 =  min odległość w pikselach między ośrodkami wykrytych w okręgach
+            // min i max promień wykrytego okręgu - koła, z pierwszego kanału
+            foreach (CircleF circle in circles) //zielone
+            {
+                if (txtXYZPromien.Text != "")
+                    txtXYZPromien.AppendText(Environment.NewLine);
+                txtXYZPromien.AppendText("Pozycja pilki : X = " + circle.Center.X.ToString().PadLeft(4) +       // x i y pozycja srodka okregu
+                                        " , Y = " + circle.Center.Y.ToString().PadLeft(4) +
+                                        " , Promien = " + circle.Radius.ToString("###.000").PadLeft(7));
+
+                txtXYZPromien.ScrollToCaret();// przesunąć pasek przewijania w dół pola tekstowego  
+
+                zielony_X = circle.Center.X;
+                zielony_Y = circle.Center.Y;
+                zielony_prom = circle.Radius;
+                // rysowanie  małego zielonego kółka w środku wykrytego obiektu 
+                // rysowanie okręgu o promieniu 3, mimo że wielkość wykrytego koła będzie znacznie większa
+                // obiekty CvInvoke mogą zostać wykorzystane do wywołania innych funkcji OpenCV 
+                CvInvoke.cvCircle(zdjOryginalne, new Point((int)circle.Center.X, (int)circle.Center.Y), 3, new MCvScalar(0, 255, 0), -1, LINE_TYPE.CV_AA, 0);
+                //Grubość koła w pikselach, -1 wskazuje aby wypełnić koło ; AA -wygładzenie pikseli, 0 - bez przesuniecia 
+                zdjOryginalne.Draw(circle, new Bgr(Color.Red), 3); // narysowac czerwone kolo wokol wykrytego obiektu 
+
+
+
+                
+                for (int i = 0; i < 8; i++)
+                {
+                    for (int j = 0; j < 8; j++)
+                    {
+                        if (((float)circle.Center.X - pola[i, j].X) <= polowa_szer_pola && ((float)circle.Center.Y - pola[i, j].Y) <= polowa_wys_pola)
+                        {
+                            pola[i,j].zielony = true;
+
+
+                            /*
+                            //SharpGL.OpenGL gl = this.openGLControl.OpenGL;
+                            gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
+                            //  Clear the color and depth buffer.
+                            gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
+                            gl.LoadIdentity();
+
+                            //this.openGLControl.OpenGLDraw += new SharpGL.RenderEventHandler(this.openGLControl_OpenGLDraw);
+                            var quadratic = gl.NewQuadric();
+                            gl.Color(255.0f, 255.0f, 0);
+                            gl.PushMatrix();
+                            //texture_p.Bind(gl);
+                            gl.Translate(-1f, 1.7f, -3.2f);
+                            gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                            gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                            gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+                            gl.PopMatrix();
+                           MessageBox.Show("zielone");
+                           cos = false;*/
+                            
+                        }
+                    }
+                }
+            }
+            foreach (CircleF circle in circles2)
+            {
+                if (txtXYZPromien.Text != "")
+                    txtXYZPromien.AppendText(Environment.NewLine);
+                txtXYZPromien.AppendText("Pozycja pilki : X = " + circle.Center.X.ToString().PadLeft(4) +       // x i y pozycja srodka okregu
+                                        " , Y = " + circle.Center.Y.ToString().PadLeft(4) +
+                                        " , Promien = " + circle.Radius.ToString("###.000").PadLeft(7));
+
+                txtXYZPromien.ScrollToCaret();// przesunąć pasek przewijania w dół pola tekstowego  
+
+                czerwony_X = circle.Center.X;
+                czerwony_Y = circle.Center.Y;
+                czerwony_prom = circle.Radius;
+
+                // rysowanie  małego zielonego kółka w środku wykrytego obiektu 
+                // rysowanie okręgu o promieniu 3, mimo że wielkość wykrytego koła będzie znacznie większa
+                // obiekty CvInvoke mogą zostać wykorzystane do wywołania innych funkcji OpenCV 
+                CvInvoke.cvCircle(zdjOryginalne, new Point((int)circle.Center.X, (int)circle.Center.Y), 3, new MCvScalar(0, 255, 0), -1, LINE_TYPE.CV_AA, 0);
+                //Grubość koła w pikselach, -1 wskazuje aby wypełnić koło ; AA -wygładzenie pikseli, 0 - bez przesuniecia 
+                zdjOryginalne.Draw(circle, new Bgr(Color.Red), 3); // narysowac czerwone kolo wokol wykrytego obiektu 
+                
+                if (pola != null)
+                {
+                    for (int i = 0; i < 8; i++)
+                    {
+                        for (int j = 0; j < 8; j++)
+                        {
+                            if (((float)circle.Center.X - pola[i, j].X) <= polowa_szer_pola && ((float)circle.Center.Y - pola[i, j].Y) <= polowa_wys_pola)
+                            {
+
+                                pola[i, j].czerwony = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            pola[2, 3].czerwony = true;
+            ibOriginal.Image = zdjOryginalne;
+            ibProcessed.Image = zdjTworzone;
+            ibProcessed2.Image = zdjTworzone2;
+
+            this.openGLControl.OpenGLDraw += new SharpGL.RenderEventHandler(this.openGLControl_OpenGLDraw);
+           //proces_rysuj_pionki_nowa();
+        }
+        private void button_pionki_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                capWebcam = new Capture(1);   // przechwytywanie 
+            }
+            catch (NullReferenceException except)
+            {
+                txtXYZPromien.Text = except.Message;
+
+                return;
+            }
+
+            if (przechwytywanie == true)
+            {
+               // Application.Idle -= procesRamkaIAktualizacjaGUI; // usun f.obrazu w liscie zadan aplikacji 
+               // Application.Idle -= proces_wykryj_plansze;
+                Application.Idle -= proces_wykryj_pionki;
+                przechwytywanie = false; // zmien znacznik - flage 
+                //btnPausseorResume.Text = "WZNÓW";
+                //wylicz();
+              //  MessageBox.Show("bede rysowac");
+             //  proces_rysuj_pionki_nowa();
+
+            }
+            else
+            {
+                //Application.Idle += procesRamkaIAktualizacjaGUI;
+                //Application.Idle += proces_wykryj_plansze;
+                Application.Idle += proces_wykryj_pionki; 
+                przechwytywanie = true;
+               // MessageBox.Show("bede rysowac");
+                //proces_rysuj_pionki_nowa();
+            }
+
+            /*
+            /////////ok 
+            if (przechwytywanie == true && cos == false)
+            {
+                Application.Idle -= procesRamkaIAktualizacjaGUI; // usun f.obrazu w liscie zadan aplikacji 
+                Application.Idle -= proces_wykryj_pionki;
+                przechwytywanie = false; // zmien znacznik - flage 
+                //btnPausseorResume.Text = "WZNÓW";
+                //wylicz();
+                //DrawPawn(czerwony_X, czerwony_Y, texture_p);
+     
+            }
+            else
+            {
+                Application.Idle += procesRamkaIAktualizacjaGUI;
+               Application.Idle += proces_wykryj_pionki;
+                przechwytywanie = true;
+
+               //  /* OpenGL gl = openGLControl.OpenGL;
+                //var quadratic = gl.NewQuadric();
+
+               // gl.PushMatrix(); // odkładamy dotychczasowe macierz na stos
+                //cylinder - pionek
+                //gl.BindTexture(OpenGL.GL_TEXTURE_2D, texture);
+               // texture_p.Bind(gl);
+
+               // gl.Translate(czerwony_X, 0.0f, czerwony_Y); //ustalanie pozycji pionka
+               // gl.Rotate(90.0f, 1.0f, 0.0f, 0.0f); // obracamy cylinder o 90 stopni wokol osi x
+               // gl.Cylinder(quadratic, 0.07f, 0.07f, 0.05f, 32, 1); // wymiary cylindra
+
+               // gl.Disk(quadratic, 0.03f, 0.07f, 32, 1); // rysowanie górnej przykrywki cylindra
+               // gl.PopMatrix(); // zdejmujemy ze stosu wcześniejsze macierze
+               // return;
+            }*/
+            
+        }
         
     }
 }
