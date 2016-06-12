@@ -13,7 +13,9 @@ namespace SharpGLWinformsApplication_warcaby
 
         public string nazwa = "";
         public bool czerwony = false;
-        public bool zielony = false; 
+        public bool zielony = false;
+        public bool zolty = false;
+        public bool niebieski = false;
 
 
     }
