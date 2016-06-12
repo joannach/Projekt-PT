@@ -49,12 +49,14 @@ namespace SharpGLWinformsApplication_warcaby
         Image<Gray, Byte> zdjTworzone3; 
         Image<Gray, Byte> szare;
 
+        //int DL_PLANSZY = 9;
+
         int czerwony_znacznik = 0;
         int zielony_znacznik = 0;
         int[][] pola_final = new int[32][];
         //string[] pola = new string[40];
         double[][] srodki_pol = new double[32][];
-        Pole[,] pola = new Pole[8, 8];
+        public Pole[,] pola = new Pole[8, 8];
 
         int ktory_obrot = 2;
         //public event MouseEventHandler MouseMove_;
@@ -68,6 +70,12 @@ namespace SharpGLWinformsApplication_warcaby
         float czerwony_Y = 0;
         float czerwony_prom = 0;
         //
+
+        float[] tablica_X_zielone= new float[12];
+        float[] tablica_Y_zielone = new float[12];
+
+        float[] tablica_X_czerwone = new float[12];
+        float[] tablica_Y_czerwone = new float[12];
 
         //do wylicz() - macierz pola
         float gorny_lewy_X = 0;
@@ -87,6 +95,8 @@ namespace SharpGLWinformsApplication_warcaby
 
 
         bool cos = true;
+        bool czy_wykrywanie_pionkow = false;
+        bool kolejna = false; 
         //koordynaty 
 
         float raz_X = 0;
@@ -105,11 +115,15 @@ namespace SharpGLWinformsApplication_warcaby
 
         int delay = 0;
 
+        float[,] pola_wirt_X;
+        float[,] pola_wirt_Y;
+
        // Texture Textures = new Texture();
 
         float rtri = 0;
 
-
+        // licznik pilnujacy zeby petle for w glDraw wykonaly sie tylko raz 
+        int licznik_forow = 1;
 
         //Textures_ texture = new Textures_();
         Texture texture = new Texture();
@@ -128,7 +142,17 @@ namespace SharpGLWinformsApplication_warcaby
 
         public SharpGLForm()
         {
-            InitializeComponent();            
+            InitializeComponent();
+            try
+            {
+                capWebcam = new Capture(1);   // przechwytywanie 
+            }
+            catch (NullReferenceException except)
+            {
+                txtXYZPromien.Text = except.Message;
+
+                return;
+            }
             SharpGL.OpenGL gl = this.openGLControl.OpenGL;
             gl.Enable(OpenGL.GL_TEXTURE_2D);
             texture.Create(gl, "C://Users/dom/Desktop/01_szachownica.bmp");   // lub szachownica.bmp (8x8)
@@ -147,7 +171,33 @@ namespace SharpGLWinformsApplication_warcaby
             label_ruch.Text = "Ruch: zielone";
             label_ruch.BackColor = Color.Green;
 
-            
+            float wart_x = 6.5f;
+            float wart_y = 1.0f;
+
+            //tablica pol  wirtualych
+            pola_wirt_X = new float[8,8];
+            pola_wirt_Y = new float[8, 8];
+            for (int i = 0; i < 8; i++)
+            {
+                //float nowa_polowa = polowa_szer_pola; 
+                for (int j = 0; j < 8; j++)
+                {
+                    //pola_wirt[i, j] = new int[];
+                     
+                    pola_wirt_X[i, j] = wart_x;
+                    pola_wirt_Y[i, j] = wart_y;
+
+                    wart_x -= 0.77143f;
+                    wart_y -= 0.77143f; 
+                }
+                wart_x = 6.5f;
+                wart_y = 1.0f;
+            }
+
+             
+ 
+
+
             //richTextBox_mysz.Text = MousePosition.X.ToString();
            // richTextBox_mysz.AppendText("X: " + MousePosition.X.ToString() + " Y:" + MousePosition.Y.ToString());
             //MouseMove += new MouseEventHandler(window_MouseMove);
@@ -240,7 +290,7 @@ namespace SharpGLWinformsApplication_warcaby
             // 
             // ibOriginal
             // 
-            this.ibOriginal.Location = new System.Drawing.Point(12, 227);
+            this.ibOriginal.Location = new System.Drawing.Point(916, 310);
             this.ibOriginal.Name = "ibOriginal";
             this.ibOriginal.Size = new System.Drawing.Size(401, 363);
             this.ibOriginal.TabIndex = 2;
@@ -250,7 +300,7 @@ namespace SharpGLWinformsApplication_warcaby
             // 
             this.ibProcessed.Location = new System.Drawing.Point(1036, 12);
             this.ibProcessed.Name = "ibProcessed";
-            this.ibProcessed.Size = new System.Drawing.Size(281, 360);
+            this.ibProcessed.Size = new System.Drawing.Size(281, 131);
             this.ibProcessed.TabIndex = 2;
             this.ibProcessed.TabStop = false;
             // 
@@ -271,7 +321,7 @@ namespace SharpGLWinformsApplication_warcaby
             this.txtXYZPromien.Name = "txtXYZPromien";
             this.txtXYZPromien.ReadOnly = true;
             this.txtXYZPromien.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtXYZPromien.Size = new System.Drawing.Size(283, 89);
+            this.txtXYZPromien.Size = new System.Drawing.Size(229, 89);
             this.txtXYZPromien.TabIndex = 4;
             // 
             // btn_wlacz
@@ -286,14 +336,14 @@ namespace SharpGLWinformsApplication_warcaby
             // 
             // openGLControl
             // 
-            this.openGLControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.openGLControl.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.openGLControl.DrawFPS = true;
-            this.openGLControl.Location = new System.Drawing.Point(0, 0);
+            this.openGLControl.Location = new System.Drawing.Point(410, 252);
             this.openGLControl.Name = "openGLControl";
             this.openGLControl.OpenGLVersion = SharpGL.Version.OpenGLVersion.OpenGL2_1;
             this.openGLControl.RenderContextType = SharpGL.RenderContextType.FBO;
             this.openGLControl.RenderTrigger = SharpGL.RenderTrigger.TimerBased;
-            this.openGLControl.Size = new System.Drawing.Size(1329, 708);
+            this.openGLControl.Size = new System.Drawing.Size(450, 450);
             this.openGLControl.TabIndex = 0;
             this.openGLControl.OpenGLInitialized += new System.EventHandler(this.openGLControl_OpenGLInitialized);
             this.openGLControl.OpenGLDraw += new SharpGL.RenderEventHandler(this.openGLControl_OpenGLDraw);
@@ -529,7 +579,7 @@ namespace SharpGLWinformsApplication_warcaby
             // panel6
             // 
             this.panel6.Controls.Add(this.label11);
-            this.panel6.Location = new System.Drawing.Point(12, 197);
+            this.panel6.Location = new System.Drawing.Point(916, 269);
             this.panel6.Name = "panel6";
             this.panel6.Size = new System.Drawing.Size(243, 24);
             this.panel6.TabIndex = 11;
@@ -537,11 +587,12 @@ namespace SharpGLWinformsApplication_warcaby
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(6, 4);
+            this.label11.Location = new System.Drawing.Point(3, 0);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(220, 13);
             this.label11.TabIndex = 0;
             this.label11.Text = "Obserwacja stanu gry w czasie rzeczywistym:";
+            this.label11.Click += new System.EventHandler(this.label11_Click);
             // 
             // button_ruch_przeciwnika
             // 
@@ -602,7 +653,7 @@ namespace SharpGLWinformsApplication_warcaby
             // 
             this.richTextBox_pola.Location = new System.Drawing.Point(536, 154);
             this.richTextBox_pola.Name = "richTextBox_pola";
-            this.richTextBox_pola.Size = new System.Drawing.Size(340, 109);
+            this.richTextBox_pola.Size = new System.Drawing.Size(340, 78);
             this.richTextBox_pola.TabIndex = 17;
             this.richTextBox_pola.TabStop = false;
             this.richTextBox_pola.Text = "";
@@ -683,7 +734,7 @@ namespace SharpGLWinformsApplication_warcaby
         }*/
 
         public void Pokaz()
-        {
+        {/*
             try
             {
                 capWebcam = new Capture(1);   // przechwytywanie 
@@ -693,7 +744,7 @@ namespace SharpGLWinformsApplication_warcaby
                 txtXYZPromien.Text = except.Message;
 
                 return;
-            }
+            }*/
 
             //gdy mamy wlasciwy obiekt do przechwycenia
             //dodajemy funkcje obrazu do listy zadań aplikacji
@@ -872,8 +923,8 @@ namespace SharpGLWinformsApplication_warcaby
             {
                 Pole pole = new Pole();
 
-
-                //test 
+                /*
+               // test
                 dwa_X = 33;
                 dwa_Y = 9;
                 dwa_prom = 26;
@@ -885,8 +936,8 @@ namespace SharpGLWinformsApplication_warcaby
                 trzy_X = 383;
                 trzy_Y = 341;
                 trzy_prom = 16;
-
-                //
+                
+                //*/
                 gorny_lewy_X = dwa_X + dwa_prom;
                 gorny_lewy_Y = dwa_Y + dwa_prom;
 
@@ -914,9 +965,36 @@ namespace SharpGLWinformsApplication_warcaby
                float nowa_polowa_szer = polowa_szer_pola;
                float nowa_polowa_wys = polowa_wys_pola;
 
-               char nazwa = 'A';
+               char nazwa_litera = 'A';
                int nazwa_int = 1;
-               
+
+               //srodki pol 
+               for (int i = 0; i < 8; i++)
+               {
+                   //float nowa_polowa = polowa_szer_pola; 
+                   for (int j = 0; j < 8; j++)
+                   {
+                       pola[i, j] = new Pole();
+                       pola[i, j].X = polowa_szer_pola + i * rozmiar_pola_szer;
+                       pola[i, j].Y = polowa_wys_pola + j * rozmiar_pola_wys;
+
+                       pola[i, j].nazwa += nazwa_litera;
+                       pola[i, j].nazwa += nazwa_int;
+
+                       ++nazwa_int;
+
+
+                   }
+                   ++nazwa_litera;
+                   nazwa_int = 1;
+
+
+
+
+
+               }
+
+               /*
                 //srodki pol 
                 for (int i = 0; i < 8; i++)
                 {
@@ -924,29 +1002,29 @@ namespace SharpGLWinformsApplication_warcaby
                     for(int j=0; j<8;j++)
                     {
                         pola[i, j] = new Pole();
-                        if (i == 0 )
-                        {
-                            pola[i,j].X = polowa_szer_pola;
-                            pola[i, j].nazwa += nazwa;
-                            
+                        pola[i, j].X = polowa_szer_pola + i * rozmiar_pola_szer;
+                        pola[i, j].Y = polowa_wys_pola + j * rozmiar_pola_wys;
 
-                        }
-                        else
-                        {
-                            pola[i,j].X = nowa_polowa_szer;
-                            pola[i, j].nazwa += (nazwa++).ToString();
-                        }
+                        pola[i,j].nazwa += nazwa_litera;
+                        pola[i, j].nazwa += nazwa_int;
+
+                        ++nazwa_int;
                         
                         
                     }
-                    nowa_polowa_szer += 2 * polowa_szer_pola;
-                    nazwa = 'A';
+                    ++nazwa_litera;
+                    nazwa_int = 1;
+
+                   
                      
 
                     
-                }
+                }*/
 
-                for (int i = 0; i < 8; i++)
+
+
+
+               /* for (int i = 0; i < 8; i++)
                 {
                     //float nowa_polowa = polowa_szer_pola; 
                     for (int j = 0; j < 8; j++)
@@ -970,14 +1048,17 @@ namespace SharpGLWinformsApplication_warcaby
 
                   
                 }
+                */
 
+                richTextBox_pola.Clear();
                 for (int i = 0; i < 8; i++)
                 {
                     for (int j = 0; j < 8; j++)
                     {
                         richTextBox_pola.AppendText("X: " + pola[i, j].X.ToString());
-                        richTextBox_pola.AppendText(" Y : " + pola[i, j].Y.ToString());
-                        richTextBox_pola.AppendText("  nazwa : : " + pola[i, j].nazwa);
+                        richTextBox_pola.AppendText(" Y: " + pola[i, j].Y.ToString());
+                        richTextBox_pola.AppendText(" nazwa: " + pola[i, j].nazwa +"\n");
+
                          
                     }
                      
@@ -985,11 +1066,14 @@ namespace SharpGLWinformsApplication_warcaby
 
 
             }
+
+           
           
         }
         
         private void button_wykryj_plansze_Click(object sender, EventArgs e)
         {
+            /*
             try
             {
                 capWebcam = new Capture(1);   // przechwytywanie 
@@ -999,7 +1083,7 @@ namespace SharpGLWinformsApplication_warcaby
                 txtXYZPromien.Text = except.Message;
 
                 return;
-            }
+            }*/
 
             //gdy mamy wlasciwy obiekt do przechwycenia
             //dodajemy funkcje obrazu do listy zadań aplikacji
@@ -1049,6 +1133,7 @@ namespace SharpGLWinformsApplication_warcaby
                 Application.Idle += procesRamkaIAktualizacjaGUI;
                 Application.Idle += proces_wykryj_plansze;
                 przechwytywanie = true;
+               wylicz();
             }
         }
 
@@ -1094,90 +1179,29 @@ namespace SharpGLWinformsApplication_warcaby
                 panel1.Visible = false;
             }*/
          }
-        
-         
 
+
+        int l = 0;
+        int znak = 0;
         // rysowanie szachownicy 
         private void openGLControl_OpenGLDraw(object sender, RenderEventArgs e)
         {
-            SharpGL.OpenGL gl = this.openGLControl.OpenGL;
-
-
-            /*
-            //SharpGL.OpenGL gl = this.openGLControl.OpenGL;
-            gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
-            //  Clear the color and depth buffer.
-            gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
-            gl.LoadIdentity();
-            var quadratic = gl.NewQuadric();
-            gl.Color(255.0f, 255.0f, 0);
-            gl.PushMatrix();
-            //texture_p.Bind(gl);
-            gl.Translate(-1f, 1.7f, -3.2f);
-            gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
-            gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
-            gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
-            gl.PopMatrix();
-
-            */
-
-           
-            //MessageBox.Show("zielone");
-
-
-            gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
-            //  Clear the color and depth buffer.
-            gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
-
-            
-            
-             /*
-             //gorny lewy
-           var quadratic = gl.NewQuadric();
-            gl.Color(255.0f, 0, 0);
-            gl.PushMatrix();
-            //texture_p.Bind(gl);
-            gl.Translate(2.3f, 1.7f, 0.86f);
-            gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
-            gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
-            gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
-            gl.PopMatrix();*/
-
-            
-
-
-            
-            if (pola[0,0] != null)
+            if (znak == 0)
             {
-                for (int i = 0; i < 8; i++)
-                {
-                    for (int j = 0; j < 8; j++)
-                    {
-                        if (pola[i, j].zielony == true)
-                        {
-                            var quadratic = gl.NewQuadric();
-                            gl.Color(255.0f, 255.0f, 0);
-                            gl.PushMatrix();
-                            //texture_p.Bind(gl);
-                            gl.Translate(2.3f +(polowa_szer_pola*(i+1)), 1.7f, -3.2f);
-                            gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
-                            gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
-                            gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+                float polowa_szer_pola_wirt = 0.5f;
 
-                            Thread.SpinWait(10);
-                           // gl.PopMatrix();
 
-                        }
-                    }
-                }
-            }
+                SharpGL.OpenGL gl = this.openGLControl.OpenGL;
 
-            /*
-           if (czerwony_X != 0)
-            {
+
+                /*
+                //SharpGL.OpenGL gl = this.openGLControl.OpenGL;
+                gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
+                //  Clear the color and depth buffer.
+                gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
+                gl.LoadIdentity();
                 var quadratic = gl.NewQuadric();
-               // var quadratic = gl.NewQuadric();
-                gl.Color(255.0f, 0, 0);
+                gl.Color(255.0f, 255.0f, 0);
                 gl.PushMatrix();
                 //texture_p.Bind(gl);
                 gl.Translate(-1f, 1.7f, -3.2f);
@@ -1186,94 +1210,271 @@ namespace SharpGLWinformsApplication_warcaby
                 gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
                 gl.PopMatrix();
 
-            }*/
-            gl.LoadIdentity();
-            gl.Translate(0.0f, 0.0f, -6.0f);
-            gl.Rotate(rtri, 0.0f, 1.0f, 0.0f);
+                */
 
 
-       
+                //MessageBox.Show("zielone");
+
+
+                gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
+                //  Clear the color and depth buffer.
+                gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
 
 
 
-            texture.Bind(gl);
-            //texture_p.Bind(gl);            
+                /*
+                //gorny lewy
+              var quadratic = gl.NewQuadric();
+               gl.Color(255.0f, 0, 0);
+               gl.PushMatrix();
+               //texture_p.Bind(gl);
+               gl.Translate(2.3f, 1.7f, 0.86f);
+               gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+               gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+               gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+               gl.PopMatrix();*/
+
+
+
+                //if (licznik_forow == 0)
+                //{
+
+               /* if (pola[0, 0] != null)
+                {
+                    for (int i = 0; i < 8; i++)
+                    {
+                        for (int j = 0; j < 8; j++)
+                        {
+                            if (pola[i, j].zielony == true)
+                            {
+                                var quadratic = gl.NewQuadric();
+                                gl.Color(255.0f, 255.0f, 0);
+                                gl.PushMatrix();
+                                //texture_p.Bind(gl);
+                                // gl.Translate(2.3f + (polowa_szer_pola_wirt * (i + 1)), 1.7f, -3.2f);
+                                gl.Translate(pola_wirt_X[i, j], 1.7f, 1.0f);
+                                gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                                gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                                gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+
+                                gl.PopMatrix();
+
+                                //polowa_szer_pola_wirt - zmieniac co 0.5f dla pierwszego, 2*0.5f  
+
+                            }
+
+                            else if (pola[i, j].czerwony == true)
+                            {
+                                var quadratic = gl.NewQuadric();
+                                gl.Color(255.0f, 255.0f, 0);
+                                gl.PushMatrix();
+                                //texture_p.Bind(gl);
+                                gl.Translate(pola_wirt_X[i, j], 1.7f, 1.0f);
+                                gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                                gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                                gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+
+
+                                // gl.PopMatrix();
+
+                            }
+                        }
+
+                    }
+                }*/
+                    //    licznik_forow = 1;
+                    //}
+                float abc = 0;
+
+
+
+               
+                /*
+                    if (pola[0, 0] != null)
+                    {
+                        for (int i = 0; i < 8; i++)
+                        {
+                            for (int j = 0; j < 8; j++)
+                            {
+                                if (pola[i, j].czerwony == true)
+                                {
+
+                                    var quadratic = gl.NewQuadric();
+                                    // var quadratic = gl.NewQuadric();
+                                    gl.Color(255.0f, 0, 0);
+                                    gl.PushMatrix();
+                                    //texture_p.Bind(gl);
+                                    gl.Translate(-1f + (i + 2), 1.7f, -3.2f + (j + 2));
+                                    gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                                    gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                                    gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+                                    gl.PopMatrix();
+                                }
+                            }
+                        }
+                    }*/
+
+
+                gl.LoadIdentity();
+                gl.Translate(-4.0f, -4.0f, 0.0f);
+               // gl.Rotate(rtri, 0.0f, 1.0f, 0.0f);
+
+
+
+
+
+
+                texture.Bind(gl);
+                //texture_p.Bind(gl);            
 
 
                 //jest ok 
+                /*
+                gl.Begin(OpenGL.GL_QUADS); // rysowanie figury (czworokątów)
+                gl.Color(255.0f, 255.0f, 255.0f);
+                gl.Normal(0.0f, 1.0f, 0.0f); // Normalna wskazująca w dół (niepotrzebna ?)
+                gl.TexCoord(0.0f, 1.0f);
+                gl.Vertex(-4.0f, -1.0f, -4.0f);
 
-            gl.Begin(OpenGL.GL_QUADS); // rysowanie figury (czworokątów)
-            gl.Color(255.0f, 255.0f, 255.0f);
-            gl.Normal(0.0f, 1.0f, 0.0f); // Normalna wskazująca w dół (niepotrzebna ?)
-            gl.TexCoord(0.0f, 1.0f);
-            gl.Vertex(-4.0f, -1.0f, -4.0f);
+                // Prawy górny
+                gl.TexCoord(0.0f, 0.0f);
+                gl.Vertex(4.0f, -1.0f, -4.0f);
+                // Lewy górny
+                gl.TexCoord(1.0f, 0.0f);
+                gl.Vertex(4.0f, -1.0f, 4.0f);
+                gl.TexCoord(1.0f, 1.0f);
+                gl.Vertex(-4.0f, -1.0f, 4.0f);
+                // Prawy dolny
+                gl.End();
+                */
 
-            // Prawy górny
-            gl.TexCoord(0.0f, 0.0f);
-            gl.Vertex(4.0f, -1.0f, -4.0f);
-            // Lewy górny
-            gl.TexCoord(1.0f, 0.0f);
-            gl.Vertex(4.0f, -1.0f, 4.0f);
-            gl.TexCoord(1.0f, 1.0f);
-            gl.Vertex(-4.0f, -1.0f, 4.0f);
-            // Prawy dolny
-            gl.End();
+                gl.Begin(OpenGL.GL_QUADS); // rysowanie figury (czworokątów)
+                gl.Color(255.0f, 255.0f, 255.0f);
+               // gl.Normal(0.0f, 1.0f, 0.0f); // Normalna wskazująca w dół (niepotrzebna ?)
+                gl.TexCoord(0.0f, 1.0f);
+                gl.Vertex(0.0f, 0.0f, 1.0f);
 
-             
-            
-            /*
-            if (czerwony_X == 0 || czerwony_Y == 0)
-            {
+                // Prawy górny
+                gl.TexCoord(1.0f, 1.0f);
+                gl.Vertex(8.0f, 0.0f, 1.0f);
+                // Lewy górny
+                gl.TexCoord(1.0f, 0.0f);
+                gl.Vertex(8.0f, 8.0f, 1.0f);
+                gl.TexCoord(0.0f, 0.0f);
+                gl.Vertex(0.0f, 8.0f, 1.0f);
+                // Prawy dolny
+                gl.End();
 
-                //MessageBox.Show("Nie wykryto czerwonych pionkow na planszy");
+                /*
+                // test test test /////////////////
+                var quadratic = gl.NewQuadric();
+                // var quadratic = gl.NewQuadric();
+                gl.Color(255.0f, 0, 0);
+                gl.PushMatrix();
+                //texture_p.Bind(gl);
+                //gl.Translate(-1f + (tablica_X_zielone[l]), 1.7f, -3.2f + (tablica_Y_zielone[l]));
+                // gl.Translate( -tablica_X_czerwone[l]/100, 1.7f, -3.2f );
+                gl.Translate(1.2f,  1.2f, 2.0f);
+                // gl.Translate( 1.1f, 1.7f, 0.65f); //to??? 28.51F ok ok ok 
+                // gl.Translate((tablica_X_czerwone[l]-300) / (-25.15), 1.7f, 0.65f);
+                // gl.Translate(tablica_X_czerwone[l] - 64.65f, 1.7f, -3.2f);
+                //gl.Translate(1.6f, 1.7f, -3.2f);
+                //gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+                gl.PopMatrix();
+                //
+                */
 
-            }
-            else
-            {
+                if (pola[0, 0] != null)
+                {
+                    for (int i = 0; i < 8; i++)
+                    {
+                        for (int j = 0; j <8; j++)
+                        {
+
+                            if (pola[i, j].zielony == true || pola[i, j].czerwony == true)
+                            {
+
+
+                                // if (tablica_X_czerwone[l] > 165)
+                                //{
+                                //var quadratic = gl.NewQuadric();
+                                var quadratic = gl.NewQuadric();
+                                gl.Color(255.0f, 0, 0);
+                                gl.PushMatrix();
+                                //texture_p.Bind(gl);
+                                //gl.Translate(-1f + (tablica_X_zielone[l]), 1.7f, -3.2f + (tablica_Y_zielone[l]));
+                                // gl.Translate( -tablica_X_czerwone[l]/100, 1.7f, -3.2f );
+                                gl.Translate(1.2f + i*0.8 , 1.2f+j*0.8  , 2.0f);
+                                // gl.Translate( 1.1f, 1.7f, 0.65f); //to??? 28.51F ok ok ok 
+                                // gl.Translate((tablica_X_czerwone[l]-300) / (-25.15), 1.7f, 0.65f);
+                                // gl.Translate(tablica_X_czerwone[l] - 64.65f, 1.7f, -3.2f);
+                                //gl.Translate(1.6f, 1.7f, -3.2f);
+                                //gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                                gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                                gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+                                gl.PopMatrix();
+                                // }
+                            }
+                        }
+                    }
+                }
+
+                /*
+                if (czerwony_X == 0 || czerwony_Y == 0)
+                {
+
+                    //MessageBox.Show("Nie wykryto czerwonych pionkow na planszy");
+
+                }
+                else
+                {
                  
 
 
-                if (pola != null)
-                {
-                    for (int i = 0; i < pola.Length; i++)
+                    if (pola != null)
                     {
-                     for (int j = 0; j < pola.Length; j++)
-                     {
+                        for (int i = 0; i < pola.Length; i++)
+                        {
+                         for (int j = 0; j < pola.Length; j++)
+                         {
 
-                    if (((float)czerwony_X - pola[i, j].X) <= polowa_szer_pola && ((float)czerwony_Y - pola[i, j].Y) <= polowa_wys_pola)
-                    {
-                    //SharpGL.OpenGL gl = this.openGLControl.OpenGL;
-                    gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
-                    //  Clear the color and depth buffer.
-                    gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
-                    gl.LoadIdentity();
-                    var quadratic = gl.NewQuadric();
-                    gl.Color(255.0f, 255.0f, 0);
-                    gl.PushMatrix();
-                    //texture_p.Bind(gl);
-                    gl.Translate(-1f, 1.7f, -3.2f);
-                    gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
-                    gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
-                    gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
-                    gl.PopMatrix();
+                        if (((float)czerwony_X - pola[i, j].X) <= polowa_szer_pola && ((float)czerwony_Y - pola[i, j].Y) <= polowa_wys_pola)
+                        {
+                        //SharpGL.OpenGL gl = this.openGLControl.OpenGL;
+                        gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
+                        //  Clear the color and depth buffer.
+                        gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
+                        gl.LoadIdentity();
+                        var quadratic = gl.NewQuadric();
+                        gl.Color(255.0f, 255.0f, 0);
+                        gl.PushMatrix();
+                        //texture_p.Bind(gl);
+                        gl.Translate(-1f, 1.7f, -3.2f);
+                        gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
+                        gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
+                        gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
+                        gl.PopMatrix();
 
-                    MessageBox.Show("czerwony narys.");
-                     }
-                      }
+                        MessageBox.Show("czerwony narys.");
+                         }
+                          }
+                        }
                     }
-                }
-            }*/
+                }*/
 
-            //OpenGL gl = openGLControl.OpenGL;
-           // SharpGL.OpenGL g = this.openGLControl.OpenGL;
+                //OpenGL gl = openGLControl.OpenGL;
+                // SharpGL.OpenGL g = this.openGLControl.OpenGL;
 
 
-        //   proces_rysuj_pionki();
+                //   proces_rysuj_pionki();
 
-           // this.Refresh();
-          // DrawPawn(czerwony_X, czerwony_Y, (int)texture_p.ToBitmap());
+                // this.Refresh();
+                // DrawPawn(czerwony_X, czerwony_Y, (int)texture_p.ToBitmap());
 
-            
+
+            }
         }
 
 
@@ -1319,12 +1520,14 @@ namespace SharpGLWinformsApplication_warcaby
             gl.LoadIdentity();
 
             //  Create a perspective transformation.
-            gl.Perspective(60.0f, (double)Width / (double)Height, 0.01, 100.0);
-
+            //gl.Perspective(60.0f, (double)Width / (double)Height, 0.01, 100.0);
+            gl.Ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
             //  Use the 'look at' helper function to position and aim the camera.
             //gl.LookAt(-5, 5, -5, 0, 0, 0, 0, 1, 0);
             
-            gl.LookAt(0, 15, -15, 0, 0, 0, 0, 5, 0);
+            //gl.LookAt(0, 15, -15, 0, 0, 0, 0, 5, 0);
+           // gl.LookAt(0, 10, 0, 0, 0, 0, 1,0, 0);
+
             //  Set the modelview matrix.
             gl.MatrixMode(OpenGL.GL_MODELVIEW);
         }
@@ -1336,7 +1539,7 @@ namespace SharpGLWinformsApplication_warcaby
 
         private void openGLControl_Load(object sender, EventArgs e)
         {
-
+          
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -1539,11 +1742,22 @@ namespace SharpGLWinformsApplication_warcaby
         void proces_wykryj_pionki(object sender, EventArgs arg)
         {
 
+            for (int i = 0; i < 8; i++ )
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    pola[i, j].zielony = false;
+                    pola[i, j].czerwony = false;
+                }
+
+            }
+                znak = 1;
+            licznik_forow = 0;
 
             SharpGL.OpenGL gl = this.openGLControl.OpenGL; 
             //wykrywanie pionkow niebieskich i czerownych 2
- 
 
+           
             zdjOryginalne = capWebcam.QueryFrame();  // do zdjOryginalne wczytywanie obrazu przechwyconego z kamery 
             if (zdjOryginalne == null)
                 return;
@@ -1588,39 +1802,79 @@ namespace SharpGLWinformsApplication_warcaby
 
 
 
-                
+                double d2_min = 123456789;
+                int i_min = 0;
+                int j_min = 0;
+               
+
                 for (int i = 0; i < 8; i++)
                 {
-                    for (int j = 0; j < 8; j++)
-                    {
-                        if (((float)circle.Center.X - pola[i, j].X) <= polowa_szer_pola && ((float)circle.Center.Y - pola[i, j].Y) <= polowa_wys_pola)
+                        for (int j = 0; j <8; j++)
                         {
-                            pola[i,j].zielony = true;
+                            double dx = (circle.Center.X - pola[i, j].X) - polowa_szer_pola;
+                            double dy = (circle.Center.Y - pola[i, j].Y) - polowa_wys_pola;
+                            double d2 = dx * dx + dy * dy;
+
+                            if(d2<d2_min)
+                            {
+                                d2_min = d2;
+                                i_min = i;
+                                j_min = j;
+
+                            }
 
 
-                            /*
-                            //SharpGL.OpenGL gl = this.openGLControl.OpenGL;
-                            gl.Enable(OpenGL.GL_TEXTURE_2D); //wlacz teksture
-                            //  Clear the color and depth buffer.
-                            gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
-                            gl.LoadIdentity();
 
-                            //this.openGLControl.OpenGLDraw += new SharpGL.RenderEventHandler(this.openGLControl_OpenGLDraw);
-                            var quadratic = gl.NewQuadric();
-                            gl.Color(255.0f, 255.0f, 0);
-                            gl.PushMatrix();
-                            //texture_p.Bind(gl);
-                            gl.Translate(-1f, 1.7f, -3.2f);
-                            gl.Rotate(0.0f, 0.0f, 1.0f, 0.0f);
-                            gl.Cylinder(quadratic, 0.30f, 0.30f, 0.20f, 32, 1);
-                            gl.Disk(quadratic, 0.10f, 0.30f, 32, 1);
-                            gl.PopMatrix();
-                           MessageBox.Show("zielone");
-                           cos = false;*/
-                            
                         }
-                    }
+                
                 }
+
+                if (d2_min < 5000000000)
+                {
+ 
+                    if (j_min == 7)
+                    {
+                        j_min = 0;
+                    }
+                    else if (j_min == 6)
+                    {
+                        j_min = 1;
+                    }
+                    else if (j_min == 5)
+                    {
+                        j_min = 2;
+                    }
+                    else if (j_min == 4)
+                    {
+                        j_min = 3;
+                    }
+                    else if (j_min == 3)
+                    {
+                        j_min = 4;
+                    }
+                    else if (j_min == 2)
+                    {
+                        j_min = 5;
+                    }
+                    else if (j_min == 1)
+                    {
+                        j_min = 6;
+                    }
+                    else if (j_min == 0)
+                    {
+                        j_min = 7;
+                    }
+
+                    pola[i_min, j_min].zielony = true;
+
+                }
+                else
+                { 
+                 // blad
+                }
+
+
+                            
             }
             foreach (CircleF circle in circles2)
             {
@@ -1643,32 +1897,121 @@ namespace SharpGLWinformsApplication_warcaby
                 //Grubość koła w pikselach, -1 wskazuje aby wypełnić koło ; AA -wygładzenie pikseli, 0 - bez przesuniecia 
                 zdjOryginalne.Draw(circle, new Bgr(Color.Red), 3); // narysowac czerwone kolo wokol wykrytego obiektu 
                 
-                if (pola != null)
-                {
-                    for (int i = 0; i < 8; i++)
-                    {
-                        for (int j = 0; j < 8; j++)
-                        {
-                            if (((float)circle.Center.X - pola[i, j].X) <= polowa_szer_pola && ((float)circle.Center.Y - pola[i, j].Y) <= polowa_wys_pola)
-                            {
+                 double d2_min = 123456789;
+                int i_min = 0;
+                int j_min = 0;
+               
 
-                                pola[i, j].czerwony = true;
+                for (int i = 0; i < 8; i++)
+                {
+                        for (int j = 0; j <8; j++)
+                        {
+
+                            // dx + polowa_szer_pola?
+                            double dx = (circle.Center.X - pola[i, j].X) - polowa_szer_pola ;
+                            double dy = (circle.Center.Y - pola[i, j].Y) - polowa_wys_pola;
+                            double d2 = dx * dx + dy * dy;
+
+                            if(d2<d2_min)
+                            {
+                                d2_min = d2;
+                                i_min = i;
+                                j_min = j;
+
                             }
+
+
+
                         }
+                
+                }
+
+                if (d2_min < 50000000)
+                {
+                    if (j_min == 7)
+                    {
+                        j_min = 0;
                     }
+                    else if (j_min == 6)
+                    {
+                        j_min = 1;
+                    }
+                    else if (j_min == 5)
+                    {
+                        j_min = 2;
+                    }
+                    else if (j_min == 4)
+                    {
+                        j_min = 3;
+                    }
+                    else if (j_min == 3)
+                    {
+                        j_min = 4;
+                    }
+                    else if (j_min == 2)
+                    {
+                        j_min = 5;
+                    }
+                    else if (j_min == 1)
+                    {
+                        j_min = 6;
+                    }
+                    else if (j_min == 0)
+                    {
+                        j_min = 7;
+                    }
+                     
+                    pola[i_min, j_min].czerwony = true;
+                    
+                }
+                else
+                {
+                //blad
+                }
+                            
+            }
+            int liczba_zielonych = 0;
+            int liczba_czerwonych = 0;
+            polazielone.Clear();
+            polaczerwone.Clear();
+            for (int i = 0; i < 8; i++)
+            { 
+                for(int j =0;j<8;j++)
+                {
+                    if (pola[i, j].zielony == true)
+                    {
+                        polazielone.AppendText(pola[i, j].nazwa + "\n");
+                        liczba_zielonych++;
+                        
+                    }
+                    else if (pola[i, j].czerwony == true)
+                    {
+                        polaczerwone.AppendText(pola[i, j].nazwa + "\n");
+                        liczba_czerwonych++;
+                    }
+
                 }
             }
 
-            pola[2, 3].czerwony = true;
-            ibOriginal.Image = zdjOryginalne;
+            textBox_stan_zielone_pionki.Text = liczba_zielonych.ToString();
+            textBox_stan_czerwone_pionki.Text = liczba_czerwonych.ToString();
+
+
+
+                //pola[2, 3].czerwony = true;
+                ibOriginal.Image = zdjOryginalne;
             ibProcessed.Image = zdjTworzone;
             ibProcessed2.Image = zdjTworzone2;
 
-            this.openGLControl.OpenGLDraw += new SharpGL.RenderEventHandler(this.openGLControl_OpenGLDraw);
+            znak = 0; 
+            //this.openGLControl.OpenGLDraw += new SharpGL.RenderEventHandler(this.openGLControl_OpenGLDraw);
+            //przechwytywanie = false;
            //proces_rysuj_pionki_nowa();
+          //  czy_wykrywanie_pionkow = false;
         }
         private void button_pionki_Click(object sender, EventArgs e)
         {
+            /*
             try
             {
                 capWebcam = new Capture(1);   // przechwytywanie 
@@ -1678,14 +2021,22 @@ namespace SharpGLWinformsApplication_warcaby
                 txtXYZPromien.Text = except.Message;
 
                 return;
-            }
+            }*/
 
-            if (przechwytywanie == true)
+            //sprawdac licznik forow
+
+            int licznik = 0;
+            //proces_wykryj_pionki(null, null);
+
+            if (przechwytywanie == true && czy_wykrywanie_pionkow == true   && kolejna == true )
             {
                // Application.Idle -= procesRamkaIAktualizacjaGUI; // usun f.obrazu w liscie zadan aplikacji 
                // Application.Idle -= proces_wykryj_plansze;
-                Application.Idle -= proces_wykryj_pionki;
+               Application.Idle -= proces_wykryj_pionki;
                 przechwytywanie = false; // zmien znacznik - flage 
+                                 //czy_wykrywanie_pionkow = false;
+                kolejna = false;
+                //licznik++;
                 //btnPausseorResume.Text = "WZNÓW";
                 //wylicz();
               //  MessageBox.Show("bede rysowac");
@@ -1698,10 +2049,17 @@ namespace SharpGLWinformsApplication_warcaby
                 //Application.Idle += proces_wykryj_plansze;
                 Application.Idle += proces_wykryj_pionki; 
                 przechwytywanie = true;
+                czy_wykrywanie_pionkow = true;
+                kolejna = true;
+                licznik++;
                // MessageBox.Show("bede rysowac");
                 //proces_rysuj_pionki_nowa();
             }
-
+            if (licznik > 0)
+            {
+                 
+            }
+            
             /*
             /////////ok 
             if (przechwytywanie == true && cos == false)
@@ -1737,6 +2095,11 @@ namespace SharpGLWinformsApplication_warcaby
                // return;
             }*/
             
+        }
+
+        private void label11_Click(object sender, EventArgs e)
+        {
+
         }
         
     }
